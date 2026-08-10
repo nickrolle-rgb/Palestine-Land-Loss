@@ -61,4 +61,4 @@ With thanks and respect for the work,
 
 [name]
 [contact]
-[repository URL]
+https://github.com/nickrolle-rgb/Palestine-Land-Loss
