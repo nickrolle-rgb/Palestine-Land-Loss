@@ -1,0 +1,145 @@
+{
+  "gid-111": {
+    "anchor": [
+      35.23129,
+      31.80306
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (human-settlement-typed query)",
+    "name": "Givat HaMivtar",
+    "wikidata": "Q2919853",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2919853"
+  },
+  "gid-112": {
+    "anchor": [
+      35.22569,
+      31.79621
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "Ma'alot Dafna",
+    "wikidata": "Q2900311",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2900311"
+  },
+  "gid-113": {
+    "anchor": [
+      35.22346,
+      31.8026
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "Ramat Eshkol",
+    "wikidata": "Q2778124",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2778124"
+  },
+  "gid-115": {
+    "anchor": [
+      35.21805,
+      31.81048
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "Ramat Shlomo",
+    "wikidata": "Q951590",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q951590"
+  },
+  "gid-631": {
+    "anchor": [
+      35.23222,
+      31.77611
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "Jewish Quarter",
+    "wikidata": "Q1186403",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1186403"
+  },
+  "gid-750": {
+    "anchor": [
+      35.2425,
+      31.84111
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (human-settlement-typed query)",
+    "name": "Neve Yaakov",
+    "wikidata": "Q2918013",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2918013"
+  },
+  "gid-771": {
+    "anchor": [
+      35.23899,
+      31.8057
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (human-settlement-typed query)",
+    "name": "French Hill",
+    "wikidata": "Q1455257",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1455257"
+  },
+  "gid-830": {
+    "anchor": [
+      35.235,
+      31.75
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "East Talpiot",
+    "wikidata": "Q2920377",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2920377"
+  },
+  "gid-840": {
+    "anchor": [
+      35.18639,
+      31.73139
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (human-settlement-typed query)",
+    "name": "Gilo",
+    "wikidata": "Q1524664",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1524664"
+  },
+  "gid-851": {
+    "anchor": [
+      35.20831,
+      31.7389
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (human-settlement-typed query)",
+    "name": "Givat HaMatos",
+    "wikidata": "Q2903335",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2903335"
+  },
+  "gid-852": {
+    "anchor": [
+      35.22168,
+      31.72484
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "Har Homa",
+    "wikidata": "Q1584365",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1584365"
+  },
+  "orphan-187": {
+    "anchor": [
+      35.24176,
+      31.77289
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (settlement/neighbourhood-typed query)",
+    "name": "Ma'ale David",
+    "wikidata": "Q6856202",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q6856202"
+  },
+  "orphan-189": {
+    "anchor": [
+      35.24278,
+      31.75324
+    ],
+    "identified": "2026-08-10",
+    "method": "Wikidata point contained within the source polygon (human-settlement-typed query)",
+    "name": "Nof Zion",
+    "wikidata": "Q7047394",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q7047394"
+  }
+}

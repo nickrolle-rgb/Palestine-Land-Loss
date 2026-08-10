@@ -34,6 +34,46 @@ override source rather than from OCHA.
 
 ## Changes
 
+**2026-08-10 — 13 unnamed settlement polygons identified from Wikidata.** East
+Jerusalem went from 2 of 20 settlements named to 14 of 20.
+
+Method: a Wikidata item's coordinate must fall **inside** the polygon.
+Containment, not proximity — a nearest-neighbour match would be exactly the
+"guess from size and position" the rules forbid. Each identification records the
+QID, the anchor coordinate and the query tier that produced it, in
+`etl/identifications.json`. **The anchor is re-verified on every build**: if a
+source revision moves the geometry so the anchor no longer falls inside, the
+identification is refused and the polygon reverts to unidentified. Wikidata is
+CC0, so there is no attribution obligation; it is credited regardless.
+
+| Source key | Identified as | Wikidata |
+|---|---|---|
+| gid-840 | Gilo | [Q1524664](https://www.wikidata.org/wiki/Q1524664) |
+| gid-750 | Neve Yaakov | [Q2918013](https://www.wikidata.org/wiki/Q2918013) |
+| gid-852 | Har Homa | [Q1584365](https://www.wikidata.org/wiki/Q1584365) |
+| gid-830 | East Talpiot | [Q2920377](https://www.wikidata.org/wiki/Q2920377) |
+| gid-115 | Ramat Shlomo | [Q951590](https://www.wikidata.org/wiki/Q951590) |
+| gid-771 | French Hill | [Q1455257](https://www.wikidata.org/wiki/Q1455257) |
+| gid-111 | Givat HaMivtar | [Q2919853](https://www.wikidata.org/wiki/Q2919853) |
+| gid-112 | Ma'alot Dafna | [Q2900311](https://www.wikidata.org/wiki/Q2900311) |
+| gid-113 | Ramat Eshkol | [Q2778124](https://www.wikidata.org/wiki/Q2778124) |
+| gid-631 | Jewish Quarter | [Q1186403](https://www.wikidata.org/wiki/Q1186403) |
+| gid-851 | Givat HaMatos | [Q2903335](https://www.wikidata.org/wiki/Q2903335) |
+| orphan-187 | Ma'ale David | [Q6856202](https://www.wikidata.org/wiki/Q6856202) |
+| orphan-189 | Nof Zion | [Q7047394](https://www.wikidata.org/wiki/Q7047394) |
+
+**Eleven polygons remain unidentified and stay that way**, including `gid-760`
+— at 2.0 km² the largest unnamed polygon in the dataset, in north-east
+Jerusalem. No Wikidata item's coordinate falls inside it. Its location and size
+make a particular identification tempting; that is precisely the inference the
+rules prohibit, so it remains unidentified until a source supports a name.
+
+Two ambiguous cases were resolved by re-running the containment test against a
+narrower, settlement-typed candidate set: `gid-112` (which also contained the
+coordinate for the *Battle* of Ammunition Hill, an event rather than a place)
+and `gid-631` (which sits inside the Old City and so contained several nested
+entities).
+
 **2026-08-10 — 12 Sinai localities excluded.** Palestine Open Maps' locality
 database includes Israeli settlements built in occupied Sinai between 1967 and
 1982 and evacuated under the Egypt–Israel peace treaty (Ofira, Neviot, Di Zahav

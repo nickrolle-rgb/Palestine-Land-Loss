@@ -30,7 +30,10 @@ look better is the worst possible trade.
    Localities, parcels, plans and infrastructure only.
 7. **Never guess a settlement's identity** from size and position. Unnamed
    polygons stay unnamed until identified from a citable reference, logged in
-   `docs/corrections.md`.
+   `docs/corrections.md`. Curated identifications live in
+   `etl/identifications.json` and are accepted only on **containment** — a
+   source coordinate falling inside the polygon — never proximity. The anchor is
+   re-verified every build; a moved polygon refuses the name.
 8. **Never conflate mechanisms of land loss.** Post-1967 settlement is unlawful
    under international law as a sourced finding (UNSC 2334; ICJ 19 July 2024).
    The 1948 depopulation is a documented event of different legal character.

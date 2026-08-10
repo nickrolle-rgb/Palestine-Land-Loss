@@ -135,6 +135,23 @@ SOURCES: dict[str, Source] = {
             "database. Permission request drafted — see docs/permissions/."
         ),
     ),
+    "wikidata": Source(
+        source_id="wikidata",
+        name="Wikidata",
+        publisher="Wikimedia Foundation",
+        licence="CC0 1.0 (public domain dedication)",
+        url="https://www.wikidata.org",
+        enabled=True,
+        attribution="Wikidata contributors, CC0",
+        notes=(
+            "Used only to identify settlement polygons the OCHA/Peace Now source "
+            "leaves unnamed. An identification is accepted only where a Wikidata "
+            "item's coordinate falls inside the polygon — containment, not "
+            "proximity — and the anchor is re-verified on every build. See "
+            "etl/identifications.json and docs/corrections.md. CC0 means no "
+            "attribution obligation, but it is credited anyway."
+        ),
+    ),
     "historical_basemaps": Source(
         source_id="historical_basemaps",
         name="Historical Basemaps — world boundaries by year",

@@ -57,20 +57,26 @@ settlements.
 on `GIS_ID` to a named part of the same settlement; grouping by `GIS_ID` also
 correctly merged multi-part settlements, reducing 201 polygons to 160 entities.
 
-The remaining unnamed polygons are shown as `Unidentified settlement (gid-NNN)`
-with a warning in the detail panel. **18 of the 20 East Jerusalem settlements
-are unnamed** — only Atarot and Ramot Allon carry names. This is not a bug in
-the ETL; the Peace Now layer does not name East Jerusalem settlements, which is
+The Peace Now layer does not name East Jerusalem settlements at all, which is
 consistent with Israel treating them as Jerusalem municipality neighbourhoods
-rather than settlements.
+rather than settlements. Originally only Atarot and Ramot Allon carried names —
+2 of 20.
 
-Since East Jerusalem is the pilot area, this is the single largest quality
-problem in the current build.
+**Largely closed, 2026-08-10.** Thirteen polygons were identified against
+Wikidata (CC0) by requiring that an item's coordinate fall *inside* the polygon.
+East Jerusalem is now 14 of 20 named. The anchor is re-verified on every build,
+so a source revision that moves the geometry causes the identification to be
+refused rather than silently misattached. Full table in `corrections.md`.
 
-**To close:** manual identification against a named reference. The large unnamed
-EJ polygons (2.0, 1.68, 1.01 km²) are almost certainly well-known settlements,
-but they must be identified from a source, not inferred from size and position.
-Log each identification in `corrections.md` with the reference used.
+**Eleven polygons remain unidentified**, including `gid-760` — at 2.0 km² the
+largest unnamed polygon in the dataset. Its size and position in north-east
+Jerusalem make a particular identification tempting; that inference is exactly
+what the rules forbid, so it stays unidentified until a source supports a name.
+
+**To close the remainder:** a named reference with geometry, most likely
+B'Tselem (permission pending) or OpenStreetMap. Note that OSM is ODbL, so
+deriving names from it would attach share-alike obligations to the derived
+database — Wikidata's CC0 was chosen partly to avoid that.
 
 ## 5. Base layer currency
 

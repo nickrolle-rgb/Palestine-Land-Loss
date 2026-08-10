@@ -135,8 +135,11 @@ These are real and they limit what the map can currently claim:
 2. **Municipal and regional council jurisdiction have no open source.** The
    layers exist and render; they are empty and labelled "no data yet".
 3. **Outposts are not separately inventoried** in the open data.
-4. **24 settlement polygons have no name** in the source dataset, including 18
-   of the 20 in East Jerusalem. They are shown as unidentified, never guessed.
+4. **11 settlement polygons remain unnamed** in the source dataset. Thirteen
+   were identified against Wikidata by requiring an item's coordinate fall
+   *inside* the polygon, taking East Jerusalem from 2 of 20 named to 14 of 20.
+   The rest are shown as unidentified, never guessed — including the largest
+   unnamed polygon, where size and position make a guess tempting.
 5. **Base layers are old** — settlements 2021, Oslo areas 2019, Barrier
    January 2018. Labelled with the data's date, not the build date.
 6. **No pre-Mandate administrative boundaries.** Late-Ottoman Palestine was split

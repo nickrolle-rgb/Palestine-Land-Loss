@@ -19,6 +19,8 @@ minimum waits on Peace Now / CBS (see docs/data-gaps.md).
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any, Iterable
 
 from ..fetch import download, retrieved_date
@@ -47,6 +49,23 @@ from ..sources import SOURCES, resource
 SETTLEMENTS_OBSERVED = "2021-06-03"
 
 EJ_OSLO_CLASS = "Israeli Declared East Jerusalem"
+
+# Curated identifications for polygons the source leaves unnamed. Each entry
+# names a Wikidata item whose coordinate falls *inside* the polygon — not merely
+# near it — so the identification is a checkable relationship rather than an
+# inference from size and position, which the project's rules forbid.
+#
+# The stored anchor is re-verified against the polygon on every build. If a
+# source revision moves the geometry so the anchor no longer falls inside, the
+# override is refused and the polygon reverts to unidentified. A silently
+# misattached name would be worse than no name.
+IDENTIFICATIONS_PATH = Path(__file__).resolve().parent.parent / "identifications.json"
+
+
+def load_identifications() -> dict[str, dict[str, Any]]:
+    if not IDENTIFICATIONS_PATH.exists():
+        return {}
+    return json.loads(IDENTIFICATIONS_PATH.read_text(encoding="utf-8"))
 
 
 def _slug(text: str) -> str:
@@ -157,11 +176,15 @@ def load_settlements(ej_polygon: dict[str, Any] | None) -> list[Entity]:
 
     entities: list[Entity] = []
     used_ids: set[str] = set()
+    identifications = load_identifications()
+    applied: list[str] = []
+    refused: list[str] = []
 
     for key, parts in groups.items():
         name = next((p["_name"] for p in parts if p["_name"]), "")
         unnamed = not name
         display_name = name or f"Unidentified settlement ({key})"
+        identification: dict[str, Any] | None = None
 
         entity_id = _slug(name) if name else key
         while entity_id in used_ids:
@@ -181,10 +204,41 @@ def load_settlements(ej_polygon: dict[str, Any] | None) -> list[Entity]:
             else {"type": "MultiPolygon", "coordinates": polys}
         )
 
+        # Apply a curated identification only if its anchor still falls inside
+        # this polygon. Verifying rather than trusting is the whole point.
+        if unnamed and key in identifications:
+            candidate = identifications[key]
+            anchor = tuple(candidate["anchor"])
+            if point_in_polygon(anchor, geom):
+                identification = candidate
+                display_name = candidate["name"]
+                unnamed = False
+                applied.append(f"{key} -> {candidate['name']}")
+            else:
+                refused.append(
+                    f"{key} ({candidate['name']}): anchor no longer inside the polygon"
+                )
+
         in_ej = bool(ej_polygon) and point_in_polygon(_centroid(geom), ej_polygon)
 
+        # Geometry always cites OCHA. An identified name adds a second
+        # citation rather than replacing the first — they are different claims
+        # from different sources.
         part_ev = ev
-        if unnamed:
+        name_ev: Evidence | None = None
+        if identification:
+            name_ev = Evidence(
+                source_id="wikidata",
+                title=f"{identification['name']} (Wikidata {identification['wikidata']})",
+                url=identification["wikidata_url"],
+                document_date=identification.get("identified"),
+                retrieved=identification.get("identified"),
+                note=(
+                    "Name not present in the OCHA/Peace Now source. "
+                    f"{identification['method']}. Logged in docs/corrections.md."
+                ),
+            )
+        elif unnamed:
             part_ev = Evidence(
                 source_id=ev.source_id,
                 title=ev.title,
@@ -219,9 +273,14 @@ def load_settlements(ej_polygon: dict[str, Any] | None) -> list[Entity]:
                         evidence=[part_ev],
                     )
                 ],
-                evidence=[part_ev],
+                evidence=[part_ev] + ([name_ev] if name_ev else []),
             )
         )
+
+    if applied:
+        print(f"       applied {len(applied)} curated identifications")
+    for r in refused:
+        print(f"       REFUSED identification: {r}")
 
     return entities
 
