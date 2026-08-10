@@ -1,6 +1,7 @@
 import {
-  BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, OSLO_COLOURS,
-  OUTPOST_COLOUR, STAGE_COLOURS, STYLE_TIMEOUT_MS, TIME,
+  BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
+  MANDATE_COLOUR, MECHANISM_STYLE, OSLO_COLOURS, OUTPOST_COLOUR, STAGE_COLOURS,
+  STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
 import { renderAbout, renderDetail } from "./panels.js";
 
@@ -12,6 +13,7 @@ const state = {
   year: TIME.max,
   historicalMode: "off",
   historicalOpacity: 0.75,
+  historicalLayer: HISTORICAL,
 };
 
 // --------------------------------------------------------------------------
@@ -39,6 +41,8 @@ async function loadAll() {
     oslo: "oslo_areas.geojson",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
+    historic: "historic_localities.geojson",
+    mandate: "mandate_palestine.geojson",
   };
   await Promise.all(
     Object.entries(names).map(async ([key, file]) => {
@@ -132,6 +136,73 @@ function computeEarliestYear() {
 // --------------------------------------------------------------------------
 // Layers
 // --------------------------------------------------------------------------
+
+function addHistoricalDataLayers(map) {
+  // Mandatory Palestine — the denominator. Without a stated whole, every
+  // "share of the land" figure is an assertion.
+  map.addSource("mandate", { type: "geojson", data: state.data.mandate });
+  map.addLayer({
+    id: "mandate-line",
+    type: "line",
+    source: "mandate",
+    layout: { visibility: "none" },
+    paint: {
+      "line-color": MANDATE_COLOUR,
+      "line-width": 2,
+      "line-dasharray": [6, 3],
+      "line-opacity": 0.85,
+    },
+  });
+
+  map.addSource("historic", { type: "geojson", data: state.data.historic });
+
+  // Depopulated localities, styled apart from settlements on purpose — a
+  // different mechanism with a different legal character and evidence base.
+  map.addLayer({
+    id: "historic-depopulated",
+    type: "circle",
+    source: "historic",
+    filter: ["==", ["get", "depopulated_1948"], true],
+    layout: { visibility: "none" },
+    paint: {
+      // Scaled by the displaced Palestinian population so the map reads as loss
+      // of people rather than dots. Prefers the Palestinian figure over the
+      // total, which in mixed cities would badly overstate displacement.
+      "circle-radius": [
+        "interpolate", ["linear"], ["zoom"],
+        7, ["interpolate", ["linear"],
+            ["coalesce", ["get", "pop_1945_palestinian"], ["get", "pop_1945_total"], 0],
+            0, 2, 5000, 7],
+        13, ["interpolate", ["linear"],
+            ["coalesce", ["get", "pop_1945_palestinian"], ["get", "pop_1945_total"], 0],
+            0, 4, 5000, 18],
+      ],
+      "circle-color": MECHANISM_STYLE.depopulation_1948.colour,
+      "circle-stroke-color": "#4a044e",
+      "circle-stroke-width": 1,
+      "circle-opacity": 0.72,
+    },
+  });
+
+  // Localities still standing, for contrast.
+  map.addLayer({
+    id: "historic-remaining",
+    type: "circle",
+    source: "historic",
+    filter: ["all",
+      ["!=", ["get", "depopulated_1948"], true],
+      ["==", ["get", "group_1945"], "Palestinian"],
+    ],
+    layout: { visibility: "none" },
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 1.6, 13, 5],
+      "circle-color": "#34d399",
+      "circle-stroke-color": "#052e16",
+      "circle-stroke-width": 0.8,
+      "circle-opacity": 0.7,
+    },
+  });
+}
 
 function addContextLayers(map) {
   map.addSource("oslo", { type: "geojson", data: state.data.oslo });
@@ -288,12 +359,13 @@ let historicalMap = null;
 
 function ensureOverlayLayer(map) {
   if (map.getSource("historical")) return;
+  const layer = state.historicalLayer;
   map.addSource("historical", {
     type: "raster",
-    tiles: [HISTORICAL.tiles],
+    tiles: [layer.tiles],
     tileSize: 256,
-    maxzoom: HISTORICAL.maxzoom,
-    attribution: HISTORICAL.attribution,
+    maxzoom: layer.maxzoom,
+    attribution: layer.attribution,
   });
   // Beneath the data layers so settlement geometry reads on top of the survey.
   const firstData = map.getLayer("settlements-built_up-fill")
@@ -328,10 +400,10 @@ function ensureSwipeMap(map) {
       sources: {
         hist: {
           type: "raster",
-          tiles: [HISTORICAL.tiles],
+          tiles: [state.historicalLayer.tiles],
           tileSize: 256,
-          maxzoom: HISTORICAL.maxzoom,
-          attribution: HISTORICAL.attribution,
+          maxzoom: state.historicalLayer.maxzoom,
+          attribution: state.historicalLayer.attribution,
         },
       },
       layers: [
@@ -360,14 +432,60 @@ function ensureSwipeMap(map) {
   return historicalMap;
 }
 
+/** Repoint both historical renderers at the currently selected survey. */
+function swapHistoricalTiles(map) {
+  const layer = state.historicalLayer;
+
+  const overlay = map.getSource("historical");
+  if (overlay) {
+    // setTiles avoids tearing down and rebuilding the layer.
+    overlay.setTiles([layer.tiles]);
+  }
+
+  if (historicalMap) {
+    const src = historicalMap.getSource("hist");
+    if (src) src.setTiles([layer.tiles]);
+  }
+}
+
+/** Usable width for the curtain. Zero while the pane/tab is not laid out. */
+function viewportWidth() {
+  const el = document.getElementById("map");
+  return (el && el.clientWidth) || window.innerWidth || 0;
+}
+
+// If the swipe is switched on before the container has a width — a hidden tab,
+// a display:none ancestor, a device rotation mid-init — a naive centre puts the
+// handle at 0 and clips the historical map away entirely, which looks like the
+// layer simply failed. Defer instead, and centre once a real width exists.
+let swipeNeedsCentring = false;
+
 function setSwipePosition(x) {
-  const w = window.innerWidth;
+  const w = viewportWidth();
+  if (!w) {
+    swipeNeedsCentring = true;
+    return;
+  }
+  swipeNeedsCentring = false;
   const clamped = Math.max(0, Math.min(w, x));
   $("#swipe-handle").style.left = `${clamped}px`;
   if (historicalMap) {
-    historicalMap.getContainer().style.clipPath =
-      `inset(0 ${w - clamped}px 0 0)`;
+    historicalMap.getContainer().style.clipPath = `inset(0 ${w - clamped}px 0 0)`;
   }
+}
+
+function centreSwipe() {
+  setSwipePosition(viewportWidth() / 2);
+}
+
+/** Re-centre as soon as the map container gains a width. */
+function watchForLayout() {
+  const el = document.getElementById("map");
+  if (!el || typeof ResizeObserver === "undefined") return;
+  const ro = new ResizeObserver(() => {
+    if (swipeNeedsCentring && viewportWidth() > 0) centreSwipe();
+  });
+  ro.observe(el);
 }
 
 function initSwipeDrag() {
@@ -384,11 +502,14 @@ function initSwipeDrag() {
   window.addEventListener("mouseup", () => { dragging = false; });
   window.addEventListener("touchend", () => { dragging = false; });
   handle.addEventListener("keydown", (e) => {
-    const cur = parseFloat(handle.style.left || window.innerWidth / 2);
+    const cur = handle.style.left
+      ? parseFloat(handle.style.left)
+      : viewportWidth() / 2;
     if (e.key === "ArrowLeft") setSwipePosition(cur - 24);
     if (e.key === "ArrowRight") setSwipePosition(cur + 24);
   });
-  window.addEventListener("resize", () => setSwipePosition(window.innerWidth / 2));
+  window.addEventListener("resize", centreSwipe);
+  watchForLayout();
 }
 
 function setHistoricalMode(map, mode) {
@@ -403,7 +524,7 @@ function setHistoricalMode(map, mode) {
   if (swipeOn) {
     ensureSwipeMap(map);
     historicalMap.getContainer().style.display = "";
-    setSwipePosition(window.innerWidth / 2);
+    centreSwipe();
     // The second canvas needs a resize once it becomes visible.
     setTimeout(() => historicalMap.resize(), 0);
   } else if (historicalMap) {
@@ -472,8 +593,80 @@ function buildContextToggles(map) {
   }
 }
 
+function buildMechanismToggles(map) {
+  const host = $("#mechanism-toggles");
+  const meta = state.data.historic.metadata || {};
+
+  const rows = [
+    {
+      id: "depopulated",
+      colour: MECHANISM_STYLE.depopulation_1948.colour,
+      label: MECHANISM_STYLE.depopulation_1948.label,
+      definition:
+        "Localities depopulated during and after the 1948 war, sized by their " +
+        "1945 population. A documented historical event — a different legal " +
+        "category from the settlements.",
+      layers: ["historic-depopulated"],
+      note: `${meta.depopulated_1948 ?? 0}`,
+    },
+    {
+      id: "remaining",
+      colour: "#34d399",
+      label: "Palestinian localities still standing",
+      definition: "For contrast with what was lost.",
+      layers: ["historic-remaining"],
+      note: "",
+    },
+    {
+      id: "mandate",
+      colour: MANDATE_COLOUR,
+      label: "Mandatory Palestine (1920)",
+      definition:
+        "The territorial denominator. Generalised boundary — indicative extent, " +
+        "not a survey-grade delimitation.",
+      layers: ["mandate-line"],
+      note: "",
+    },
+  ];
+
+  for (const r of rows) {
+    const row = toggleRow({
+      id: r.id, colour: r.colour, label: r.label,
+      definition: r.definition, checked: false, note: r.note,
+    });
+    row.querySelector("input").addEventListener("change", (e) => {
+      const vis = e.target.checked ? "visible" : "none";
+      r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
+    });
+    host.appendChild(row);
+  }
+}
+
 function buildHistoricalToggles(map) {
   const host = $("#historical-toggles");
+
+  // Which historical survey to show.
+  const picker = document.createElement("select");
+  picker.id = "historical-layer";
+  picker.style.cssText =
+    "width:100%;margin-bottom:8px;background:var(--surface-2);color:var(--ink);" +
+    "border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px";
+  for (const layer of HISTORICAL_LAYERS) {
+    const opt = document.createElement("option");
+    opt.value = layer.id;
+    opt.textContent = `${layer.label} — ${layer.detail}`;
+    if (layer.id === state.historicalLayer.id) opt.selected = true;
+    picker.appendChild(opt);
+  }
+  picker.addEventListener("change", (e) => {
+    state.historicalLayer =
+      HISTORICAL_LAYERS.find((l) => l.id === e.target.value) || HISTORICAL;
+    $("#historical-note").textContent =
+      `${state.historicalLayer.label} · ${state.historicalLayer.detail}. Via Palestine Open Maps.`;
+    swapHistoricalTiles(map);
+  });
+  host.appendChild(picker);
+
   const modes = [
     ["off", "Off"],
     ["overlay", "Overlay (adjustable opacity)"],
@@ -555,6 +748,8 @@ function initInteraction(map) {
     "settlements-regional_council-fill",
     "incidents-point",
     "localities-point",
+    "historic-depopulated",
+    "historic-remaining",
   ];
 
   map.on("click", (e) => {
@@ -613,10 +808,12 @@ async function init() {
   const onStyleReady = () => {
     if (map.getLayer("settlements-built_up-fill")) return; // already applied
     addContextLayers(map);
+    addHistoricalDataLayers(map);
     addSettlementLayers(map);
 
     if (!uiBuilt) {
       buildExtentToggles(map);
+      buildMechanismToggles(map);
       buildContextToggles(map);
       buildHistoricalToggles(map);
       buildIncidentToggles(map);

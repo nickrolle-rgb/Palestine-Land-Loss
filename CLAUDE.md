@@ -2,9 +2,10 @@
 
 ## What this project is
 
-An interactive map of Israeli settlement development in the occupied Palestinian
-territory. Read `SCOPE.md` for the original scoping and `docs/data-gaps.md` for
-what is currently missing. The pilot area is **East Jerusalem**.
+**Palestinian Land Loss** — an interactive evidence map. Read `SCOPE.md` for the
+original scoping (written when it was narrower, "Settlement Encroachment Map")
+and `docs/data-gaps.md` for what is missing. The settlement-pipeline pilot area
+is **East Jerusalem**; the historical layers cover all of historic Palestine.
 
 ## Non-negotiables
 
@@ -30,6 +31,17 @@ look better is the worst possible trade.
 7. **Never guess a settlement's identity** from size and position. Unnamed
    polygons stay unnamed until identified from a citable reference, logged in
    `docs/corrections.md`.
+8. **Never conflate mechanisms of land loss.** Post-1967 settlement is unlawful
+   under international law as a sourced finding (UNSC 2334; ICJ 19 July 2024).
+   The 1948 depopulation is a documented event of different legal character.
+   Both are land loss; they get different styling, evidence and legal notes.
+   Flattening them weakens the settlement case rather than strengthening the
+   1948 one.
+9. **Never size a symbol by a misleading total.** Depopulation symbols use the
+   Palestinian 1945 population, not the locality total — in mixed cities the
+   total overstates displacement by more than 2×.
+10. **Never hand-draw a historical boundary.** No GIS exists for late-Ottoman
+    sanjaks; that is recorded as a gap, not filled in by eye.
 
 ## Conventions
 
@@ -66,3 +78,10 @@ python -m http.server -d web 8000
 - **Windows console encoding** mangles Arabic — use `PYTHONIOENCODING=utf-8`.
 - **No GDAL/tippecanoe/Docker** on this machine, by design. Don't add them as
   prerequisites; `pyshp` + `pyproj` cover it.
+- **MapLibre style expressions can't index nested arrays.** Anything used for
+  styling (e.g. `pop_1945_palestinian`) must be flattened in `schema.py`.
+- **Swipe curtain must tolerate a zero-width container.** If the map has no
+  width at init the curtain collapses and looks like a failed layer; positioning
+  defers until a `ResizeObserver` reports real width.
+- **Two unresolved licences**: `pom-data` declares none, historical-basemaps is
+  GPL-3.0. Both flagged in `etl/sources.py`; resolve before publication.

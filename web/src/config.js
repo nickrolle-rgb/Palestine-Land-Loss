@@ -24,15 +24,67 @@ export const FALLBACK_STYLE = {
 export const STYLE_TIMEOUT_MS = 6000;
 
 // Palestine Open Maps — already georeferenced, do not rebuild.
-export const HISTORICAL = {
-  id: "pal20k-1940s",
-  label: "Survey of Palestine 1:20,000",
-  detail: "Surveyed 1940–1945",
-  tiles: "https://palopenmaps.org/tiles/pal20k-1940s/{z}/{x}/{y}.jpg",
-  attribution:
-    '<a href="https://palopenmaps.org">Palestine Open Maps</a> — Survey of Palestine, surveyed 1940–1945',
-  maxzoom: 16,
+// Ordered oldest first: the PEF sheets predate essentially all Zionist land
+// purchase, so they are the closest thing to a pre-transfer baseline that
+// exists as surveyed cartography.
+const POM_ATTRIBUTION =
+  '<a href="https://palopenmaps.org">Palestine Open Maps</a>';
+
+export const HISTORICAL_LAYERS = [
+  {
+    id: "pal63k-1880",
+    label: "PEF Survey of Western Palestine",
+    detail: "Surveyed 1871–77 · pre-Mandate baseline",
+    tiles: "https://palopenmaps.org/tiles/pal63k-1880/{z}/{x}/{y}@2x.jpg",
+    attribution: `${POM_ATTRIBUTION} — PEF Survey of Western Palestine, surveyed 1871–77`,
+    maxzoom: 15,
+  },
+  {
+    id: "pal20k-1940s",
+    label: "Survey of Palestine 1:20,000",
+    detail: "Surveyed 1940–1945",
+    tiles: "https://palopenmaps.org/tiles/pal20k-1940s/{z}/{x}/{y}.jpg",
+    attribution: `${POM_ATTRIBUTION} — Survey of Palestine, surveyed 1940–1945`,
+    maxzoom: 16,
+  },
+  {
+    id: "pal250k-1946",
+    label: "Palestine 1:250,000",
+    detail: "1946 · immediately pre-Nakba",
+    tiles: "https://palopenmaps.org/tiles/pal250k-1946/{z}/{x}/{y}.jpg",
+    attribution: `${POM_ATTRIBUTION} — Palestine 1:250,000, 1946`,
+    maxzoom: 14,
+  },
+  {
+    id: "pal100k-1950s",
+    label: "Palestine 1:100,000",
+    detail: "1950s · immediately post-Nakba",
+    tiles: "https://palopenmaps.org/tiles/pal100k-1950s/{z}/{x}/{y}.jpg",
+    attribution: `${POM_ATTRIBUTION} — Palestine 1:100,000, 1950s`,
+    maxzoom: 15,
+  },
+  {
+    id: "isr250k-1951",
+    label: "Israel 1:250,000",
+    detail: "1951 · renamed landscape",
+    tiles: "https://palopenmaps.org/tiles/isr250k-1951/{z}/{x}/{y}@2x.jpg",
+    attribution: `${POM_ATTRIBUTION} — Israel 1:250,000, 1951`,
+    maxzoom: 14,
+  },
+];
+
+// Default historical layer for the swipe.
+export const HISTORICAL = HISTORICAL_LAYERS[1];
+
+// Mechanisms of land loss are styled apart on purpose. Post-1967 settlement is
+// unlawful as a sourced legal finding; the 1948 depopulation is a documented
+// historical event of different legal character. Same map, different marks.
+export const MECHANISM_STYLE = {
+  depopulation_1948: { colour: "#f472b6", label: "Depopulated in 1948" },
+  settlement_post_1967: { colour: "#dc2626", label: "Israeli settlement (post-1967)" },
 };
+
+export const MANDATE_COLOUR = "#fbbf24";
 
 // The seven-stage pipeline. Colour ramps from "paper" to "built".
 export const STAGE_COLOURS = {

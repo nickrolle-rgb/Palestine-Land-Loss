@@ -92,7 +92,43 @@ population figure, and that field is dirty — values include `NA` and
 cross-references like `with Ar Ram`. Non-numeric values are preserved as notes
 rather than being coerced or dropped.
 
-## 7. Al-Haq coverage
+## 7. Pre-Mandate administrative boundaries — not drawn
+
+Late-Ottoman Palestine was not one administrative unit. The Mutasarrifiyya of
+Jerusalem — an independent sanjak reporting directly to Constantinople from 1872
+— covered the south; the sanjaks of Nablus and Acre sat under the Vilayet of
+Beirut.
+
+**No GIS dataset of those boundaries could be located.** Checked:
+
+| Source | Result |
+|---|---|
+| `aourednik/historical-basemaps` | Ottoman Empire as a single polygon in `world_1900`; no sub-imperial divisions |
+| OpenHistoricalMap (Overpass) | Ottoman entities at admin_level 2 only; level 4/6 boundaries begin 1953 |
+| Academic/GIS repositories | Nothing published found |
+
+Per the rule against guessed geometry, they are not drawn. The period is
+represented instead by the **PEF Survey of Western Palestine (surveyed 1871–77)**,
+which is genuine surveyed cartography, and by a textual account in the About
+panel.
+
+**To close:** the Institute for Palestine Studies' Ottoman Palestine project, or
+digitisation from a published Ottoman administrative atlas. Any resulting
+boundaries must be recorded as derived-by-georeferencing, with the source sheet
+cited, not presented as survey-grade.
+
+## 8. Licences unresolved on two historical sources
+
+| Source | Problem |
+|---|---|
+| Palestine Open Maps `pom-data` | **No licence declared at all.** Consuming their raster tiles with attribution is a different question from redistributing their locality database, which this build does. |
+| `aourednik/historical-basemaps` | **GPL-3.0** — copyleft, and its implications for a derived geospatial database are not obvious. Used only for the Mandatory Palestine boundary. |
+
+Both must be resolved before publication. Neither is currently disabled, because
+the alternative is shipping a land-loss map with no historical layer at all — but
+this is a deliberate, recorded risk rather than an oversight.
+
+## 9. Al-Haq coverage
 
 Al-Haq publishes narrative HTML, not a geolocated database. Of 71 crawled
 records: 47 are locatable field stories and 24 are territory-wide periodic

@@ -117,6 +117,40 @@ SOURCES: dict[str, Source] = {
         currency_note="Historical underlay: Survey of Palestine 1:20,000, surveyed 1940–1945.",
         notes="Already georeferenced. Consume as tiles; do not rebuild.",
     ),
+    "pom_localities": Source(
+        source_id="pom_localities",
+        name="Palestine Open Maps — locality database",
+        publisher="Palestine Open Maps / Visualizing Palestine",
+        licence="UNDECLARED — the pom-data repository states no licence",
+        url="https://github.com/palopenmaps/pom-data",
+        enabled=True,
+        attribution="Palestine Open Maps (palopenmaps.org)",
+        currency_note="Locality records span 1922–2016; repository last updated 2025.",
+        notes=(
+            "2,543 localities with trilingual names, population for 1922/1931/1945 "
+            "split Palestinian/Jewish, depopulation dates, and cross-references to "
+            "Zochrot, Palestine Remembered, Abu Sitta and PalQuest. "
+            "NO LICENCE IS DECLARED on the repository. Consuming their raster tiles "
+            "with attribution is a separate question from redistributing this "
+            "database. Permission request drafted — see docs/permissions/."
+        ),
+    ),
+    "historical_basemaps": Source(
+        source_id="historical_basemaps",
+        name="Historical Basemaps — world boundaries by year",
+        publisher="André Ourednik",
+        licence="GPL-3.0 — copyleft; see docs/permissions/README.md",
+        url="https://github.com/aourednik/historical-basemaps",
+        enabled=True,
+        attribution="Historical Basemaps (aourednik), GPL-3.0",
+        currency_note="Mandatory Palestine boundary as at 1920. BORDERPRECISION 3.",
+        notes=(
+            "Used for the Mandatory Palestine boundary, which is the territorial "
+            "denominator for any land-loss measure. GPL-3.0 is a copyleft licence "
+            "and may impose obligations on a derived database — this needs a "
+            "decision before publication, logged as an open question."
+        ),
+    ),
     "israeli_cbs": Source(
         source_id="israeli_cbs",
         name="Israeli Central Bureau of Statistics",

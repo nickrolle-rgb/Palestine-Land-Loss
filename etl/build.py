@@ -18,14 +18,18 @@ from collections import Counter
 from datetime import date
 
 from .adapters import alhaq as alhaq_adapter
+from .adapters import historical
 from .adapters import ocha
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of
 from .schema import (
     EXTENT_DEFINITIONS,
+    MECHANISM_LABELS,
+    MECHANISM_NOTES,
     Confidence,
     EntityType,
     ExtentType,
+    LossMechanism,
     RecordType,
     Stage,
     feature,
@@ -98,6 +102,33 @@ def build_base() -> dict:
             feature_collection([feature(f["geometry"], f["properties"]) for f in barrier]),
         )
 
+    # --- historical: the "what was there before" side of land loss ---
+    print("[hist] Palestine Open Maps localities")
+    hist = historical.load_localities()
+    depop = [l for l in hist if l.depopulated_1948]
+    print(f"       {len(hist)} historic localities; {len(depop)} depopulated 1947-50")
+    write_json(
+        PROCESSED / "historic_localities.geojson",
+        feature_collection(
+            [feature(l.geometry, l.properties()) for l in hist],
+            source="Palestine Open Maps",
+            total=len(hist),
+            depopulated_1948=len(depop),
+            licence_note="Publisher declares no licence; permission request pending.",
+        ),
+    )
+
+    print("[hist] Mandatory Palestine boundary")
+    mandate = historical.load_mandate_boundary()
+    if mandate:
+        write_json(
+            PROCESSED / "mandate_palestine.geojson",
+            feature_collection([feature(mandate["geometry"], mandate["properties"])]),
+        )
+        print("       boundary written")
+    else:
+        print("       NOT FOUND in source — layer omitted")
+
     built = [f for f in (PROCESSED / "settlements_built_up.geojson",) if f.exists()]
     all_feats = json.loads(built[0].read_text(encoding="utf-8"))["features"] if built else []
 
@@ -108,6 +139,9 @@ def build_base() -> dict:
         "locality_count": len(localities),
         "extent_counts": extent_counts,
         "barrier_features": len(barrier),
+        "historic_localities": len(hist),
+        "depopulated_1948": len(depop),
+        "mandate_boundary": bool(mandate),
         "bounds": bounds_of(all_feats),
     }
 
@@ -177,6 +211,7 @@ def write_meta(stats: dict) -> None:
         PROCESSED / "meta.json",
         {
             "built": date.today().isoformat(),
+            "project": "Palestinian Land Loss",
             "pilot_area": "East Jerusalem",
             "view": EJ_VIEW,
             "bounds": stats.get("bounds"),
@@ -186,6 +221,14 @@ def write_meta(stats: dict) -> None:
             "extent_definitions": {
                 k.value: v for k, v in EXTENT_DEFINITIONS.items()
             },
+            "mechanisms": [
+                {
+                    "id": m.value,
+                    "label": MECHANISM_LABELS[m],
+                    "note": MECHANISM_NOTES.get(m),
+                }
+                for m in LossMechanism
+            ],
             "entity_types": [t.value for t in EntityType],
             "confidence_levels": [c.value for c in Confidence],
             "stats": {k: v for k, v in stats.items() if k != "localities"},

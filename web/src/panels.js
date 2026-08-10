@@ -97,20 +97,50 @@ export function renderDetail(feature, meta) {
   }
 
   if (p.locality_id) {
-    const pop = population.find((x) => x.value != null);
+    const refs = parse(p.references) || {};
+    // Population trajectory is the point for depopulated places: it shows what
+    // was lost, not merely that something was.
+    const series = population
+      .filter((x) => x.value != null && !x.group)
+      .sort((a, b) => a.year - b.year)
+      .map((x) => `<dt>${x.year}</dt><dd>${x.value.toLocaleString()}</dd>`)
+      .join("");
+    const split = population.filter((x) => x.group && x.value != null);
+    const refLinks = Object.entries(refs)
+      .map(([k, v]) =>
+        `<li><a href="${esc(v)}" target="_blank" rel="noopener">${esc(
+          k.replace(/_/g, " ")
+        )}</a></li>`
+      )
+      .join("");
+
     host.innerHTML = `
-      <span class="kind">Palestinian locality</span>
+      <span class="kind">${
+        p.depopulated_1948 ? "Depopulated locality · 1948" : "Palestinian locality"
+      }</span>
       <h3>${esc(p.name)}</h3>
       <dl>
         <dt>District</dt><dd>${esc(p.district || "—")}</dd>
-        <dt>Oslo area</dt><dd>${esc(p.oslo_area || "—")}</dd>
-        <dt>East Jerusalem</dt><dd>${p.in_east_jerusalem ? "Yes" : "No"}</dd>
-        <dt>Population</dt><dd>${
-          pop ? `${pop.value.toLocaleString()} (${pop.year})` : "not published"
-        }</dd>
+        ${p.subdistrict ? `<dt>Subdistrict</dt><dd>${esc(p.subdistrict)}</dd>` : ""}
+        ${p.oslo_area ? `<dt>Oslo area</dt><dd>${esc(p.oslo_area)}</dd>` : ""}
+        ${p.status_now ? `<dt>Status</dt><dd>${esc(p.status_now)}</dd>` : ""}
+        ${p.depopulated_date ? `<dt>Depopulated</dt><dd>${esc(p.depopulated_date)}</dd>` : ""}
+        ${p.group_1945 ? `<dt>Community 1945</dt><dd>${esc(p.group_1945)}</dd>` : ""}
       </dl>
+      ${series ? `<h4>Population</h4><dl>${series}</dl>` : ""}
+      ${split.length
+        ? `<p class="hint">1945 split: ${split
+            .map((x) => `${esc(x.group)} ${x.value.toLocaleString()}`)
+            .join(" · ")}</p>`
+        : ""}
       ${namesBlock(names)}
-      <h4>Sources</h4>${evidenceList(evidence)}`;
+      ${refLinks ? `<h4>Further documentation</h4><ul class="evidence">${refLinks}</ul>` : ""}
+      <h4>Sources</h4>${evidenceList(evidence)}
+      ${p.depopulated_1948 ? `<div class="warn">
+        Depopulation is a distinct mechanism from post-1967 settlement, with a
+        different legal character and evidence base. It is styled apart for that
+        reason, not to rank one above the other.
+      </div>` : ""}`;
     document.getElementById("detail").hidden = false;
     return;
   }
@@ -180,10 +210,45 @@ export function renderAbout(meta, data) {
   document.getElementById("about-body").innerHTML = `
     <h2>What this map shows</h2>
     <p>
-      Israeli settlement development in the occupied Palestinian territory, drawn
-      against the landscape that preceded it. This build is an
-      <strong>East Jerusalem pilot</strong> on a West Bank-wide base layer, built
-      on ${new Date(meta.built).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}.
+      Palestinian land loss, drawn against the landscape that preceded it, with
+      every element resolving to a dated document. Built on
+      ${new Date(meta.built).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}.
+    </p>
+
+    <h2>Mechanisms, kept apart</h2>
+    <p>
+      Land has been lost by more than one process, and those processes are not
+      alike. Rendering them in a single undifferentiated colour would misrepresent
+      all of them, so each has its own styling, evidence and legal note:
+    </p>
+    <ul>
+      <li><strong>Post-1967 settlement</strong> — unlawful under international law
+        as a sourced finding (UNSC 2334; ICJ advisory opinion, 19 July 2024).</li>
+      <li><strong>1948 depopulation</strong> — around 750,000 Palestinians
+        displaced and ${stats.depopulated_1948 ?? 0} localities depopulated in the
+        data shown here, with property subsequently vested in the state under the
+        Absentees' Property Law 1950. A documented historical event, and a
+        different legal category from the settlements.</li>
+    </ul>
+    <p class="hint">
+      Keeping these distinct is not a softening. It is what stops a critic
+      dismissing the whole map by attacking the weakest join in it.
+    </p>
+
+    <h2>Before the Mandate</h2>
+    <p>
+      Late-Ottoman Palestine was not a single administrative unit. The
+      Mutasarrifiyya of Jerusalem — an independent sanjak reporting directly to
+      Constantinople from 1872 — covered the south, while the sanjaks of Nablus
+      and Acre sat under the Vilayet of Beirut.
+    </p>
+    <p class="hint">
+      <strong>Those boundaries are not drawn on this map.</strong> No GIS dataset
+      of late-Ottoman sanjak boundaries could be located — historical-basemaps and
+      OpenHistoricalMap both stop at empire level. Rather than hand-draw them, the
+      period is represented by the PEF Survey of Western Palestine (surveyed
+      1871–77), which is actual surveyed cartography of the time, and the gap is
+      recorded in the corrections log.
     </p>
 
     <h2>The three ways to measure "how much land"</h2>

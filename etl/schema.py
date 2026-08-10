@@ -75,6 +75,52 @@ class EntityType(str, Enum):
     INDUSTRIAL_ZONE = "industrial_zone"
 
 
+class LossMechanism(str, Enum):
+    """How land was lost. Kept distinct because the mechanisms are not alike.
+
+    The project's credibility depends on not flattening these together. Post-1967
+    settlement is unlawful under international law as a sourced finding (UNSC
+    2334; ICJ advisory opinion, 19 July 2024). The 1948 depopulation is a
+    documented historical event with a different legal character and a different
+    evidence base. Both are Palestinian land loss; rendering them in identical
+    visual language would misrepresent both, and would weaken the settlement case
+    by association rather than strengthen the 1948 one.
+
+    Each mechanism carries its own styling, its own evidence and its own legal
+    note in the UI.
+    """
+
+    DEPOPULATION_1948 = "depopulation_1948"
+    SETTLEMENT_POST_1967 = "settlement_post_1967"
+    # Modelled, not yet populated — see docs/data-gaps.md
+    LAND_TRANSFER_MANDATE = "land_transfer_mandate"
+    CLOSED_MILITARY_AREA = "closed_military_area"
+    BARRIER_SEVERANCE = "barrier_severance"
+
+
+MECHANISM_LABELS = {
+    LossMechanism.DEPOPULATION_1948: "Depopulated in 1948",
+    LossMechanism.SETTLEMENT_POST_1967: "Israeli settlement (post-1967)",
+    LossMechanism.LAND_TRANSFER_MANDATE: "Mandate-era land transfer",
+    LossMechanism.CLOSED_MILITARY_AREA: "Closed military area",
+    LossMechanism.BARRIER_SEVERANCE: "Severed by the Barrier",
+}
+
+MECHANISM_NOTES = {
+    LossMechanism.DEPOPULATION_1948: (
+        "Localities depopulated during and after the 1948 war. Around 750,000 "
+        "Palestinians were displaced. Property was subsequently vested in the "
+        "state under the Absentees' Property Law 1950. This is a documented "
+        "historical event; it is not the same legal category as the settlements."
+    ),
+    LossMechanism.SETTLEMENT_POST_1967: (
+        "Israeli settlements in territory occupied since 1967. Unlawful under "
+        "international law per UN Security Council Resolution 2334 (2016) and the "
+        "ICJ advisory opinion of 19 July 2024."
+    ),
+}
+
+
 class ExtentType(str, Enum):
     """The three ways to draw "how much land is taken". All three ship."""
 
@@ -256,22 +302,56 @@ class Locality:
     names: Names
     geometry: dict[str, Any]
     district: str | None = None
+    subdistrict: str | None = None
     in_east_jerusalem: bool = False
     population: list[dict[str, Any]] = field(default_factory=list)
     oslo_area: str | None = None
     depopulated_1948: bool = False
+    depopulated_date: str | None = None
+    status_now: str | None = None       # e.g. "Depopulated & built over"
+    group_1945: str | None = None       # Palestinian / Jewish / Mixed
+    group_now: str | None = None
+    mechanism: LossMechanism | None = None
+    references: dict[str, str] = field(default_factory=dict)  # external cross-refs
     evidence: list[Evidence] = field(default_factory=list)
 
     def properties(self) -> dict[str, Any]:
+        # Flattened for MapLibre: style expressions cannot index the nested
+        # population array, and circle radius is scaled by 1945 population so
+        # the depopulation layer reads as loss of people rather than dots.
+        pop_1945 = next(
+            (p["value"] for p in self.population
+             if p.get("year") == 1945 and not p.get("group") and p.get("value")),
+            None,
+        )
+        # In mixed cities the total badly overstates displacement — Jerusalem's
+        # 1945 total is ~157,000, which is not the number of Palestinians
+        # displaced from it. Symbol size uses the Palestinian figure where the
+        # source records the split, and falls back to the total only when it
+        # does not.
+        pop_1945_pal = next(
+            (p["value"] for p in self.population
+             if p.get("year") == 1945 and p.get("group") == "Palestinian" and p.get("value")),
+            None,
+        )
         return {
             "locality_id": self.locality_id,
             "name": self.names.primary,
             "names": self.names.to_dict(),
             "district": self.district,
+            "subdistrict": self.subdistrict,
+            "pop_1945_total": pop_1945,
+            "pop_1945_palestinian": pop_1945_pal,
             "in_east_jerusalem": self.in_east_jerusalem,
             "oslo_area": self.oslo_area,
             "population": self.population,
             "depopulated_1948": self.depopulated_1948,
+            "depopulated_date": self.depopulated_date,
+            "status_now": self.status_now,
+            "group_1945": self.group_1945,
+            "group_now": self.group_now,
+            "mechanism": self.mechanism.value if self.mechanism else None,
+            "references": self.references,
             "evidence": [e.to_dict() for e in self.evidence],
         }
 

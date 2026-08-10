@@ -1,12 +1,29 @@
-# Settlement Encroachment Map
+# Palestinian Land Loss
 
-An interactive map of Israeli settlement development in the occupied Palestinian
-territory, showing each stage of the planning pipeline over time, against the
-landscape that preceded it.
+An interactive map of Palestinian land loss, drawn against the landscape that
+preceded it, where every element resolves to a dated document.
 
-**Current state:** working East Jerusalem pilot on a West Bank-wide base layer,
-built entirely from openly licensed data. See [Known gaps](#known-gaps) — several
-are load-bearing.
+**Current state:** working build covering historic Palestine, with an East
+Jerusalem pilot for the settlement pipeline. Built entirely from openly licensed
+or permission-pending data. See [Known gaps](#known-gaps) — several are
+load-bearing.
+
+## Mechanisms, kept apart
+
+Land has been lost by more than one process, and those processes are not alike.
+Collapsing them into one undifferentiated colour would misrepresent all of them,
+so each carries its own styling, evidence and legal note:
+
+| Mechanism | Status | In this build |
+|---|---|---|
+| **Post-1967 settlement** | Unlawful under international law as a sourced finding — UNSC 2334 (2016), ICJ advisory opinion 19 July 2024 | 160 settlements, built-up extent |
+| **1948 depopulation** | Documented historical event; property vested in the state under the Absentees' Property Law 1950 | 467 localities depopulated 1947–50 |
+| Mandate-era land transfer | Modelled, not populated | — |
+| Closed military areas | Modelled, not populated | — |
+| Barrier severance | Modelled, not populated | — |
+
+Keeping these distinct is not a softening. It is what stops a critic dismissing
+the whole map by attacking its weakest join.
 
 ## Quick start
 
@@ -48,8 +65,17 @@ result to refresh the deployed map.
   on a parallel track because they are frequently authorised retroactively and
   skip stages 2–4.
 - **Time slider** resolving stage history, not a polygon-per-year.
-- **Swipe comparison** against the Survey of Palestine 1:20,000 (surveyed
-  1940–1945) via Palestine Open Maps.
+- **Five historical surveys** via Palestine Open Maps, selectable in swipe or
+  overlay: PEF Survey of Western Palestine (surveyed 1871–77), Survey of
+  Palestine 1:20,000 (1940–45), Palestine 1:250,000 (1946), Palestine 1:100,000
+  (1950s) and Israel 1:250,000 (1951) — before and after the Nakba in the same
+  control.
+- **Depopulated localities sized by displaced population**, using the Palestinian
+  figure rather than the total where the source records the split. Jerusalem's
+  1945 total is 157,080; its Palestinian population was 60,080. Using the total
+  would inflate the symbol 2.6×.
+- **Mandatory Palestine boundary** as the stated denominator — without a defined
+  whole, every "share of the land" figure is an assertion.
 - **Every feature cites a dated document**, with the date retrieved.
 - **Al-Haq incident records** matched to localities by name, with unplaceable
   records withheld rather than guessed.
@@ -72,6 +98,7 @@ but not yet needed. See [docs/architecture.md](docs/architecture.md).
 | `etl/geo.py` | Shapefile reading, CRS verification, reprojection to EPSG:4326 |
 | `etl/adapters/ocha.py` | OCHA/HDX base geography and settlements |
 | `etl/adapters/alhaq.py` | Al-Haq crawl, gazetteer matching, confidence scoring |
+| `etl/adapters/historical.py` | Palestine Open Maps localities, Mandate boundary |
 | `web/` | Static MapLibre client |
 | `docs/` | Pipeline, naming policy, data gaps, corrections, permission drafts |
 
@@ -102,6 +129,17 @@ These are real and they limit what the map can currently claim:
    of the 20 in East Jerusalem. They are shown as unidentified, never guessed.
 5. **Base layers are old** — settlements 2021, Oslo areas 2019, Barrier
    January 2018. Labelled with the data's date, not the build date.
+6. **No pre-Mandate administrative boundaries.** Late-Ottoman Palestine was split
+   between the Mutasarrifiyya of Jerusalem (independent, reporting directly to
+   Constantinople from 1872) and the sanjaks of Nablus and Acre under the Vilayet
+   of Beirut. No GIS dataset of those boundaries could be located —
+   historical-basemaps and OpenHistoricalMap both stop at empire level. They are
+   **not drawn**; the PEF Survey (1871–77) stands in as the period's cartographic
+   record.
+7. **Two licences need resolving before publication.** Palestine Open Maps'
+   `pom-data` declares no licence at all, and historical-basemaps is GPL-3.0,
+   which is copyleft and may impose obligations on a derived database. Both are
+   flagged in `etl/sources.py` and `docs/permissions/`.
 
 ## Legal footing
 

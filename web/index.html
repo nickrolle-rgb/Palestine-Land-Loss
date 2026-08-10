@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settlement Encroachment Map — East Jerusalem pilot</title>
+<title>Palestinian Land Loss — an evidence map</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="src/style.css">
 </head>
@@ -16,8 +16,8 @@
 
 <header id="titlebar">
   <div class="title">
-    <h1>Settlement Encroachment Map</h1>
-    <p class="subtitle">East Jerusalem pilot &middot; <span id="stage-readout">all stages</span></p>
+    <h1>Palestinian Land Loss</h1>
+    <p class="subtitle">Every element cites a dated document &middot; <span id="stage-readout">all stages</span></p>
   </div>
   <button id="about-open" class="ghost">About the data</button>
 </header>
@@ -31,6 +31,16 @@
     <h2>Land measured as</h2>
     <p class="hint">These three definitions differ by an order of magnitude. Pick deliberately.</p>
     <div id="extent-toggles"></div>
+  </section>
+
+  <section class="block">
+    <h2>Mechanism of loss</h2>
+    <p class="hint">
+      Different mechanisms, styled apart. Post-1967 settlement is unlawful under
+      international law as a sourced finding; the 1948 depopulation is a
+      documented event of different legal character. Both are land loss.
+    </p>
+    <div id="mechanism-toggles"></div>
   </section>
 
   <section class="block">
@@ -53,7 +63,7 @@
   </section>
 
   <section class="block">
-    <h2>Planning stage</h2>
+    <h2>Settlement planning stage</h2>
     <ol id="stage-legend" class="stage-legend"></ol>
     <p class="hint">
       Outposts are a parallel track: built without Israeli authorisation and often
