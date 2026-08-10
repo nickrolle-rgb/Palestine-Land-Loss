@@ -1,6 +1,6 @@
 import {
-  BASEMAP, DATA, EXTENT_STYLE, HISTORICAL, OSLO_COLOURS,
-  OUTPOST_COLOUR, STAGE_COLOURS, TIME,
+  BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, OSLO_COLOURS,
+  OUTPOST_COLOUR, STAGE_COLOURS, STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
 import { renderAbout, renderDetail } from "./panels.js";
 
@@ -606,23 +606,55 @@ async function init() {
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
 
-  map.on("load", () => {
+  // Layer setup runs on every style load, because swapping the style discards
+  // all sources and layers. UI construction runs once.
+  let uiBuilt = false;
+
+  const onStyleReady = () => {
+    if (map.getLayer("settlements-built_up-fill")) return; // already applied
     addContextLayers(map);
     addSettlementLayers(map);
-    buildExtentToggles(map);
-    buildContextToggles(map);
-    buildHistoricalToggles(map);
-    buildIncidentToggles(map);
-    buildStageLegend();
-    initInteraction(map);
-    initTimeline(map);
-    initSwipeDrag();
-    state.earliestYear = computeEarliestYear();
+
+    if (!uiBuilt) {
+      buildExtentToggles(map);
+      buildContextToggles(map);
+      buildHistoricalToggles(map);
+      buildIncidentToggles(map);
+      buildStageLegend();
+      initInteraction(map);
+      initTimeline(map);
+      initSwipeDrag();
+      state.earliestYear = computeEarliestYear();
+      uiBuilt = true;
+    }
+
     applyTime(map);
     $("#loading").classList.add("done");
-  });
+  };
 
-  map.on("error", (e) => console.error("map error", e && e.error));
+  map.on("style.load", onStyleReady);
+
+  // The basemap is a third-party dependency and must not be able to brick the
+  // application. If the remote style has not arrived in time, fall back to a
+  // bare local style so the data layers still render.
+  let fellBack = false;
+  const fallBack = (why) => {
+    if (fellBack || map.isStyleLoaded()) return;
+    fellBack = true;
+    console.warn(`basemap unavailable (${why}); using fallback style`);
+    $("#basemap-warning").hidden = false;
+    map.setStyle(FALLBACK_STYLE);
+  };
+
+  const watchdog = setTimeout(() => fallBack("timeout"), STYLE_TIMEOUT_MS);
+  map.on("style.load", () => clearTimeout(watchdog));
+
+  map.on("error", (e) => {
+    const msg = String(e?.error?.message || "");
+    console.error("map error", e && e.error);
+    // A failed style fetch surfaces here before any style.load event.
+    if (!map.isStyleLoaded() && /style|fetch|load/i.test(msg)) fallBack(msg);
+  });
 
   renderAbout(state.meta, state.data);
   $("#about-open").addEventListener("click", () => $("#about").showModal());

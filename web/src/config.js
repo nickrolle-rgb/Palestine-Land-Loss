@@ -8,6 +8,21 @@ export const DATA = "public/data";
 export const BASEMAP =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+// If the remote basemap cannot be reached, the map still has to work: the
+// settlement geometry, Oslo areas and incidents are the point, and the basemap
+// is context. This bare style keeps the whole application functional offline
+// rather than leaving it stuck on a loading screen.
+export const FALLBACK_STYLE = {
+  version: 8,
+  sources: {},
+  layers: [
+    { id: "bg", type: "background", paint: { "background-color": "#14120f" } },
+  ],
+};
+
+// How long to wait for the remote style before falling back.
+export const STYLE_TIMEOUT_MS = 6000;
+
 // Palestine Open Maps — already georeferenced, do not rebuild.
 export const HISTORICAL = {
   id: "pal20k-1940s",
