@@ -12,6 +12,24 @@ adapters exist in `etl/sources.py` but are `enabled=False`.
 3. If a source declines or restricts, note that too — a documented refusal is
    useful and prevents someone re-asking in six months.
 
+## Precedent — what these organisations have already allowed
+
+Researched 2026-08-10. Useful because a permission request that cites a
+comparable grant is far stronger than one that asks in the abstract.
+
+| Organisation | Precedent found | Strength |
+|---|---|---|
+| Peace Now | OCHA publishes their built-up settlement layer on HDX as `settlements_peacenow.zip` under **CC BY-IGO** | Strong — they have already permitted open redistribution by a third party |
+| Peace Now | Amnesty International's June 2026 West Bank report used data **provided directly by Peace Now** | Moderate — shows willingness to supply data on request |
+| Peace Now | FMEP republishes Peace Now maps and charts with hyperlink attribution | Moderate — established reuse practice |
+| Al-Haq | Site footer states **"All Rights Reserved ©2026"** | Negative — no implied permission; metadata-and-link-out is the correct posture |
+| B'Tselem | **Unknown.** btselem.org returned HTTP 429 to every automated request; terms not retrieved | Unverified — check before sending |
+| Palestine Open Maps | No licence declared. Their `sources.csv` credits David Rumsey, National Libraries of Australia and Israel, Hebrew University, ESRI and OpenStreetMap | Mixed provenance likely explains the silence — ask narrowly |
+
+One counter-signal worth knowing: CAMERA, a group critical of Peace Now, has
+alleged they decline to release all underlying data. Treat as contested, but it
+suggests a narrowly scoped request will land better than a broad one.
+
 ## What is already permitted
 
 OCHA's "State of Palestine Settlements" layer on HDX **is** Peace Now's built-up
@@ -32,10 +50,15 @@ request below is for their *planning-stage* data, which is not on HDX.
 
 ## Drafts
 
-| File | Recipient | Asking for |
-|---|---|---|
-| `peace-now.md` | Peace Now (Settlement Watch) | Planning-stage, tender, construction-start and outpost data |
-| `btselem.md` | B'Tselem | Municipal and regional council jurisdiction boundaries |
-| `alhaq.md` | Al-Haq | Courtesy notice + confirmation the link-out approach is acceptable |
+| File | Recipient | Asking for | Priority |
+|---|---|---|---|
+| `palestine-open-maps.md` | Palestine Open Maps | Licence for the locality database already in use | **Highest — we are redistributing it now** |
+| `peace-now.md` | Peace Now (Settlement Watch) | Planning-stage, tender, construction-start and outpost data | High — unblocks stages 1–5 |
+| `btselem.md` | B'Tselem | Municipal and regional council jurisdiction boundaries | High — unblocks two empty layers |
+| `alhaq.md` | Al-Haq | Courtesy notice + confirmation the link-out approach is acceptable | Medium |
 
 These are **drafts for you to review and send**. Nothing has been sent.
+
+Each still needs `[name]` and `[contact]` filled in. Addresses for Peace Now and
+B'Tselem are search-derived and unverified — both sites block automated requests
+— so confirm them before sending.

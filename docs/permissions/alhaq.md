@@ -1,17 +1,21 @@
 # Draft — Al-Haq
 
 **Status:** not sent
-**To:** Al-Haq — via <https://www.alhaq.org/contact-us>
-**Subject:** Courtesy notice — linking your documentation from an open settlement map
+**To:** Al-Haq — via <https://www.alhaq.org/contact-us> (confirmed reachable)
+**Subject:** Courtesy notice — linking your documentation from an open map
+
+**Note:** alhaq.org carries "All Rights Reserved ©2026" in its footer, so there
+is no implied permission to reproduce anything. That is precisely why this build
+stores only metadata and links out — and why this notice is worth sending even
+though it isn't strictly a permission request.
 
 ---
 
 Dear Al-Haq,
 
-I'm building a non-commercial, open-source map of Israeli settlement development
-in the occupied Palestinian territory. It includes a layer that links documented
-violations to the places they occurred, drawing on your monitoring and
-documentation.
+I'm building a non-commercial, open-source map called Palestinian Land Loss. It
+includes a layer that links documented violations to the places they occurred,
+drawing on your monitoring and documentation.
 
 This is a courtesy notice rather than a request to republish, because I've
 deliberately built it so that no content of yours is reproduced. I would still
@@ -22,7 +26,11 @@ value knowing if you'd prefer I did anything differently.
 For each record: the title, the publication date, the URL, and one locality
 matched from the OCHA communities gazetteer. That's all. Clicking a point shows
 the title and date and links to your page. **None of your report text is copied,
-summarised or cached.**
+summarised or cached.** I note your site reserves all rights, which is exactly
+why the build is designed this way.
+
+Article text is fetched transiently to identify which place a report concerns,
+and discarded — only the resulting locality identifier is stored.
 
 **How records are placed, and when they aren't**
 
