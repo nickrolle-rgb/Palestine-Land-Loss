@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settlement Encroachment Map — East Jerusalem pilot</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Curtain handle for the historical/current swipe -->
+<div id="swipe" hidden><div id="swipe-handle" role="separator" aria-label="Historical / current comparison slider" tabindex="0"></div></div>
+
+<header id="titlebar">
+  <div class="title">
+    <h1>Settlement Encroachment Map</h1>
+    <p class="subtitle">East Jerusalem pilot &middot; <span id="stage-readout">all stages</span></p>
+  </div>
+  <button id="about-open" class="ghost">About the data</button>
+</header>
+
+<aside id="panel" class="panel">
+  <section class="block">
+    <h2>Land measured as</h2>
+    <p class="hint">These three definitions differ by an order of magnitude. Pick deliberately.</p>
+    <div id="extent-toggles"></div>
+  </section>
+
+  <section class="block">
+    <h2>Context layers</h2>
+    <div id="context-toggles"></div>
+  </section>
+
+  <section class="block">
+    <h2>Historical underlay</h2>
+    <div id="historical-toggles"></div>
+    <p class="hint" id="historical-note">
+      Survey of Palestine 1:20,000, surveyed 1940&ndash;1945, via Palestine Open Maps.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Documented incidents</h2>
+    <div id="incident-toggles"></div>
+    <p class="hint" id="incident-coverage"></p>
+  </section>
+
+  <section class="block">
+    <h2>Planning stage</h2>
+    <ol id="stage-legend" class="stage-legend"></ol>
+    <p class="hint">
+      Outposts are a parallel track: built without Israeli authorisation and often
+      retroactively legalised, so they skip stages 2&ndash;4 entirely.
+    </p>
+  </section>
+</aside>
+
+<div id="timeline">
+  <label for="time-slider">As at</label>
+  <input type="range" id="time-slider" min="1945" max="2026" step="1" value="2026">
+  <output id="time-readout">2026</output>
+  <button id="time-reset" class="ghost small">Reset</button>
+  <p id="time-gap" hidden></p>
+</div>
+
+<div id="detail" class="detail" hidden>
+  <button id="detail-close" class="close" aria-label="Close">&times;</button>
+  <div id="detail-body"></div>
+</div>
+
+<dialog id="about">
+  <button id="about-close" class="close" aria-label="Close">&times;</button>
+  <div id="about-body"></div>
+</dialog>
+
+<div id="loading">Loading data&hellip;</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

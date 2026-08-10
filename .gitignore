@@ -1,0 +1,22 @@
+# Fetched source data — reproducible via `python -m etl.build fetch`
+data/raw/
+data/interim/
+
+# Generated web payloads
+web/public/data/*.geojson
+web/public/data/*.json
+!web/public/data/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+
+# OS
+Thumbs.db
+.DS_Store

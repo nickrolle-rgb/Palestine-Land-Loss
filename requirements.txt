@@ -1,0 +1,7 @@
+# Pure-Python geo stack — deliberately avoids GDAL/tippecanoe so the ETL runs
+# on a bare Windows box with no system geo libraries. See docs/architecture.md.
+pyshp>=3.1          # shapefile reader (pure Python)
+pyproj>=3.7         # CRS transforms (wheels, no GDAL needed)
+requests>=2.32      # HTTP with caching layer in etl/fetch.py
+beautifulsoup4>=4.12 # Al-Haq HTML parsing
+lxml>=5.0           # parser backend
