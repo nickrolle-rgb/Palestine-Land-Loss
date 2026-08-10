@@ -21,7 +21,7 @@ from .adapters import alhaq as alhaq_adapter
 from .adapters import historical
 from .adapters import ocha
 from .fetch import PROCESSED, write_json
-from .geo import bounds_of
+from .geo import bounds_of, count_vertices, simplify_geometry
 from .schema import (
     EXTENT_DEFINITIONS,
     MECHANISM_LABELS,
@@ -34,11 +34,42 @@ from .schema import (
     Stage,
     feature,
     feature_collection,
+    normalise_features,
 )
 from .sources import manifest
 
 # Default map view: the East Jerusalem pilot area.
 EJ_VIEW = {"center": [35.2310, 31.7800], "zoom": 11.2}
+
+# Simplification tolerance in degrees, for context layers only. ~0.0001 deg is
+# roughly 10 m at this latitude — invisible at the zooms these layers are read
+# at, and the difference between a 3 MB Oslo layer and a usable one.
+# Measurement layers (settlement extents) are never simplified, and areas are
+# computed from source geometry before any simplification happens.
+CONTEXT_TOLERANCE = 0.0001
+
+# Shared citation table, published once in meta.json rather than repeated on
+# every feature. Populated as layers are written.
+EVIDENCE_TABLE: dict[str, dict] = {}
+
+
+def write_layer(name: str, feats: list[dict], **meta) -> None:
+    """Normalise, then write. Every layer goes through here."""
+    packed = normalise_features(feats, EVIDENCE_TABLE)
+    write_json(PROCESSED / name, feature_collection(packed, **meta))
+
+
+def _simplify_features(feats: list[dict], tol: float = CONTEXT_TOLERANCE) -> list[dict]:
+    before = count_vertices(feats)
+    out = [
+        {**f, "geometry": simplify_geometry(f["geometry"], tol)} if f.get("geometry") else f
+        for f in feats
+    ]
+    after = count_vertices(out)
+    if before:
+        print(f"       simplified {before:,} -> {after:,} vertices "
+              f"({100 - after * 100 // before}% smaller)")
+    return out
 
 
 def build_base() -> dict:
@@ -61,6 +92,16 @@ def build_base() -> dict:
     barrier = ocha.load_barrier()
     print(f"       {len(barrier)} features")
 
+    print("[base] firing zones (closed military areas)")
+    firing = ocha.load_firing_zones()
+    firing_km2 = sum(f["properties"]["area_m2"] or 0 for f in firing) / 1e6
+    dated = sum(1 for f in firing if f["properties"]["signed_date"])
+    print(f"       {len(firing)} zones, {firing_km2:,.0f} km2, {dated} with a signed order date")
+
+    print("[base] village boundaries")
+    villages = ocha.load_village_boundaries()
+    print(f"       {len(villages)} polygons")
+
     # --- settlement extents, one FeatureCollection per extent definition ---
     extent_counts: dict[str, int] = {}
     for extent_type in ExtentType:
@@ -76,54 +117,70 @@ def build_base() -> dict:
                 props["in_east_jerusalem"] = e.entity_type is EntityType.EJ_SETTLEMENT
                 feats.append(feature(ext.geometry, props))
         extent_counts[extent_type.value] = len(feats)
-        write_json(
-            PROCESSED / f"settlements_{extent_type.value}.geojson",
-            feature_collection(
-                feats,
-                extent_type=extent_type.value,
-                definition=EXTENT_DEFINITIONS[extent_type],
-                count=len(feats),
-            ),
+        write_layer(
+            f"settlements_{extent_type.value}.geojson",
+            feats,
+            extent_type=extent_type.value,
+            definition=EXTENT_DEFINITIONS[extent_type],
+            count=len(feats),
         )
         status = "EMPTY — source not yet available" if not feats else f"{len(feats)} features"
         print(f"       settlements_{extent_type.value}.geojson: {status}")
 
-    write_json(
-        PROCESSED / "localities.geojson",
-        feature_collection([feature(l.geometry, l.properties()) for l in localities]),
+    write_layer(
+        "localities.geojson",
+        [feature(l.geometry, l.properties()) for l in localities],
     )
-    write_json(
-        PROCESSED / "oslo_areas.geojson",
-        feature_collection([feature(f["geometry"], f["properties"]) for f in oslo]),
+
+    print("[base] oslo_areas.geojson")
+    write_layer(
+        "oslo_areas.geojson",
+        _simplify_features([feature(f["geometry"], f["properties"]) for f in oslo]),
     )
     if barrier:
-        write_json(
-            PROCESSED / "barrier.geojson",
-            feature_collection([feature(f["geometry"], f["properties"]) for f in barrier]),
+        print("[base] barrier.geojson")
+        write_layer(
+            "barrier.geojson",
+            _simplify_features([feature(f["geometry"], f["properties"]) for f in barrier]),
         )
+
+    print("[base] firing_zones.geojson")
+    write_layer(
+        "firing_zones.geojson",
+        _simplify_features([feature(f["geometry"], f["properties"]) for f in firing]),
+        mechanism="closed_military_area",
+        count=len(firing),
+        total_km2=round(firing_km2, 1),
+        note="Israeli firing zones (closed military areas). Each polygon "
+             "carries the date its closure order was signed.",
+    )
+
+    print("[base] village_boundaries.geojson")
+    write_layer(
+        "village_boundaries.geojson",
+        _simplify_features([feature(f["geometry"], f["properties"]) for f in villages]),
+    )
 
     # --- historical: the "what was there before" side of land loss ---
     print("[hist] Palestine Open Maps localities")
     hist = historical.load_localities()
     depop = [l for l in hist if l.depopulated_1948]
     print(f"       {len(hist)} historic localities; {len(depop)} depopulated 1947-50")
-    write_json(
-        PROCESSED / "historic_localities.geojson",
-        feature_collection(
-            [feature(l.geometry, l.properties()) for l in hist],
-            source="Palestine Open Maps",
-            total=len(hist),
-            depopulated_1948=len(depop),
-            licence_note="Publisher declares no licence; permission request pending.",
-        ),
+    write_layer(
+        "historic_localities.geojson",
+        [feature(l.geometry, l.properties()) for l in hist],
+        source="Palestine Open Maps",
+        total=len(hist),
+        depopulated_1948=len(depop),
+        licence_note="Publisher declares no licence; permission request pending.",
     )
 
     print("[hist] Mandatory Palestine boundary")
     mandate = historical.load_mandate_boundary()
     if mandate:
-        write_json(
-            PROCESSED / "mandate_palestine.geojson",
-            feature_collection([feature(mandate["geometry"], mandate["properties"])]),
+        write_layer(
+            "mandate_palestine.geojson",
+            [feature(mandate["geometry"], mandate["properties"])],
         )
         print("       boundary written")
     else:
@@ -139,6 +196,9 @@ def build_base() -> dict:
         "locality_count": len(localities),
         "extent_counts": extent_counts,
         "barrier_features": len(barrier),
+        "firing_zones": len(firing),
+        "firing_zones_km2": round(firing_km2, 1),
+        "village_boundaries": len(villages),
         "historic_localities": len(hist),
         "depopulated_1948": len(depop),
         "mandate_boundary": bool(mandate),
@@ -169,19 +229,17 @@ def build_incidents(localities) -> dict:
         },
     )
 
-    write_json(
-        PROCESSED / "incidents.geojson",
-        feature_collection(
-            [feature(i.geometry, i.properties()) for i in renderable],
-            source="Al-Haq monitoring and documentation",
-            total_records=len(incidents),
-            rendered=len(renderable),
-            withheld=len(incidents) - len(renderable),
-            confidence_breakdown=dict(counts),
-            note=(
-                "Records that could not be resolved to exactly one locality are "
-                "retained in incidents_unplaced.json but are not drawn on the map."
-            ),
+    write_layer(
+        "incidents.geojson",
+        [feature(i.geometry, i.properties()) for i in renderable],
+        source="Al-Haq monitoring and documentation",
+        total_records=len(incidents),
+        rendered=len(renderable),
+        withheld=len(incidents) - len(renderable),
+        confidence_breakdown=dict(counts),
+        note=(
+            "Records that could not be resolved to exactly one locality are "
+            "retained in incidents_unplaced.json but are not drawn on the map."
         ),
     )
     write_json(
@@ -232,10 +290,13 @@ def write_meta(stats: dict) -> None:
             "entity_types": [t.value for t in EntityType],
             "confidence_levels": [c.value for c in Confidence],
             "stats": {k: v for k, v in stats.items() if k != "localities"},
+            # Citations, deduplicated across every layer. Features carry
+            # `evidence_ref` ids that resolve here.
+            "evidence": EVIDENCE_TABLE,
             **manifest(),
         },
     )
-    print("[meta] meta.json written")
+    print(f"[meta] meta.json written ({len(EVIDENCE_TABLE)} distinct citations)")
 
 
 def main(argv: list[str]) -> int:

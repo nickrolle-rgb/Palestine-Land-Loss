@@ -208,6 +208,94 @@ def geometry_area_m2(geom: dict[str, Any]) -> float:
     return round(total, 1)
 
 
+def _perp_distance(p, a, b) -> float:
+    """Perpendicular distance from p to segment ab, in degrees."""
+    (px, py), (ax, ay), (bx, by) = p, a, b
+    dx, dy = bx - ax, by - ay
+    if dx == 0 and dy == 0:
+        return ((px - ax) ** 2 + (py - ay) ** 2) ** 0.5
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    cx, cy = ax + t * dx, ay + t * dy
+    return ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
+
+
+def _douglas_peucker(points: list[list[float]], tol: float) -> list[list[float]]:
+    if len(points) < 3:
+        return points
+    # Iterative rather than recursive: some rings run to tens of thousands of
+    # vertices and Python's recursion limit is not generous.
+    keep = [False] * len(points)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(points) - 1)]
+    while stack:
+        start, end = stack.pop()
+        worst, worst_i = 0.0, -1
+        for i in range(start + 1, end):
+            d = _perp_distance(points[i], points[start], points[end])
+            if d > worst:
+                worst, worst_i = d, i
+        if worst > tol and worst_i != -1:
+            keep[worst_i] = True
+            stack.append((start, worst_i))
+            stack.append((worst_i, end))
+    return [p for p, k in zip(points, keep) if k]
+
+
+def simplify_geometry(geom: dict[str, Any], tol_deg: float) -> dict[str, Any]:
+    """Douglas-Peucker simplification for context layers.
+
+    Applied only to layers used for orientation, never to anything a measurement
+    or claim is derived from. Settlement extents and areas are computed before
+    simplification and are not recomputed after, so displayed areas continue to
+    reflect the source geometry rather than the drawn one.
+
+    Rings that would collapse below four points keep their original vertices —
+    a degenerate polygon renders as a visual artefact, which is worse than a
+    few extra kilobytes.
+    """
+    def do_ring(ring: list[list[float]]) -> list[list[float]]:
+        out = _douglas_peucker(ring, tol_deg)
+        if len(out) < 4:
+            return ring
+        if out[0] != out[-1]:
+            out.append(out[0])
+        return out
+
+    t = geom["type"]
+    if t == "Polygon":
+        return {"type": t, "coordinates": [do_ring(r) for r in geom["coordinates"]]}
+    if t == "MultiPolygon":
+        return {
+            "type": t,
+            "coordinates": [[do_ring(r) for r in poly] for poly in geom["coordinates"]],
+        }
+    if t == "LineString":
+        return {"type": t, "coordinates": _douglas_peucker(geom["coordinates"], tol_deg)}
+    if t == "MultiLineString":
+        return {
+            "type": t,
+            "coordinates": [_douglas_peucker(l, tol_deg) for l in geom["coordinates"]],
+        }
+    return geom
+
+
+def count_vertices(features: list[dict[str, Any]]) -> int:
+    n = 0
+
+    def walk(c: Any) -> None:
+        nonlocal n
+        if c and isinstance(c[0], (int, float)):
+            n += 1
+            return
+        for part in c:
+            walk(part)
+
+    for f in features:
+        if f.get("geometry"):
+            walk(f["geometry"]["coordinates"])
+    return n
+
+
 def bounds_of(features: list[dict[str, Any]]) -> list[float]:
     xs: list[float] = []
     ys: list[float] = []

@@ -34,4 +34,27 @@ override source rather than from OCHA.
 
 ## Changes
 
-*(none yet — the project has not been published)*
+**2026-08-10 — 12 Sinai localities excluded.** Palestine Open Maps' locality
+database includes Israeli settlements built in occupied Sinai between 1967 and
+1982 and evacuated under the Egypt–Israel peace treaty (Ofira, Neviot, Di Zahav
+and others, `district_1945 = Sinai`). They are real records, but Sinai is
+Egyptian territory and outside the scope of a map about Palestinian land loss.
+Excluded at ingest by district name rather than by a bounding box, so the
+exclusion is explicit and reviewable. Found by
+`tests/test_invariants.py::GeometryIntegrity`, which flagged a locality at
+27.87°N — well south of historic Palestine.
+
+**2026-08-10 — Duyuk population figures are internally inconsistent.** The source
+records a 1945 Palestinian population of 730 against a locality total of 130.
+One of the two is wrong and there is no basis in the data for deciding which, so
+neither is silently corrected: the contradictory group figure is withheld, symbol
+sizing falls back to the total (the choice that cannot overstate the claim), and
+the feature's evidence note records the conflict. Worth reporting upstream to
+Palestine Open Maps. Found by
+`tests/test_invariants.py::MechanismsStayDistinct`.
+
+**2026-08-10 — firing zone names withheld where unreadable.** The firing zones
+shapefile's DBF uses an unreliable codepage and `FIRE_NAME` arrives as mangled
+Hebrew (e.g. `309à'`). Garbled labels are dropped rather than displayed — a
+visible encoding error invites doubt about everything else on the map — and those
+zones are identified by their signing date instead.

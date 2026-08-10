@@ -39,6 +39,16 @@ python -m etl.build all
 python -m http.server -d web 8000
 ```
 
+Tests assert the rules the project's credibility rests on — every feature cites
+resolvable evidence, no ambiguous incident is plotted, periodic reports are never
+pinned, coordinates fall inside historic Palestine, a declared CRS that disagrees
+with the `.prj` raises, and no source appears in output while disabled in the
+registry:
+
+```bash
+python -m unittest discover tests -v
+```
+
 Then open <http://localhost:8000>.
 
 `etl.build` takes `base` (OCHA layers only, no crawl), `incidents` (Al-Haq only)

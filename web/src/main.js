@@ -43,6 +43,8 @@ async function loadAll() {
     incidents: "incidents.geojson",
     historic: "historic_localities.geojson",
     mandate: "mandate_palestine.geojson",
+    firing: "firing_zones.geojson",
+    villages: "village_boundaries.geojson",
   };
   await Promise.all(
     Object.entries(names).map(async ([key, file]) => {
@@ -201,6 +203,48 @@ function addHistoricalDataLayers(map) {
       "circle-stroke-width": 0.8,
       "circle-opacity": 0.7,
     },
+  });
+}
+
+function addFiringZoneLayers(map) {
+  // A closure order removes access to land as surely as a settlement does, and
+  // every one of these polygons carries the date its order was signed — so this
+  // is a mechanism of loss in its own right, not background context.
+  map.addSource("firing", { type: "geojson", data: state.data.firing });
+  map.addLayer({
+    id: "firing-fill",
+    type: "fill",
+    source: "firing",
+    layout: { visibility: "none" },
+    paint: { "fill-color": "#f97316", "fill-opacity": 0.16 },
+  });
+  map.addLayer({
+    id: "firing-line",
+    type: "line",
+    source: "firing",
+    layout: { visibility: "none" },
+    paint: {
+      "line-color": "#f97316",
+      "line-width": 1.2,
+      "line-dasharray": [2, 2],
+      "line-opacity": 0.8,
+    },
+  });
+
+  map.addSource("villages", { type: "geojson", data: state.data.villages });
+  map.addLayer({
+    id: "villages-fill",
+    type: "fill",
+    source: "villages",
+    layout: { visibility: "none" },
+    paint: { "fill-color": "#34d399", "fill-opacity": 0.1 },
+  });
+  map.addLayer({
+    id: "villages-line",
+    type: "line",
+    source: "villages",
+    layout: { visibility: "none" },
+    paint: { "line-color": "#34d399", "line-width": 0.8, "line-opacity": 0.6 },
   });
 }
 
@@ -618,6 +662,25 @@ function buildMechanismToggles(map) {
       note: "",
     },
     {
+      id: "firing",
+      colour: "#f97316",
+      label: "Closed military areas",
+      definition:
+        `${(state.data.firing.metadata || {}).count ?? 0} Israeli firing zones ` +
+        `covering ${(state.data.firing.metadata || {}).total_km2 ?? 0} km² — about ` +
+        `18% of the West Bank. Each carries the date its closure order was signed.`,
+      layers: ["firing-fill", "firing-line"],
+      note: `${(state.data.firing.metadata || {}).count ?? 0}`,
+    },
+    {
+      id: "villages",
+      colour: "#34d399",
+      label: "Palestinian village boundaries",
+      definition: "Areal extent of Palestinian villages, rather than a single point.",
+      layers: ["villages-fill", "villages-line"],
+      note: `${state.data.villages.features.length}`,
+    },
+    {
       id: "mandate",
       colour: MANDATE_COLOUR,
       label: "Mandatory Palestine (1920)",
@@ -750,6 +813,7 @@ function initInteraction(map) {
     "localities-point",
     "historic-depopulated",
     "historic-remaining",
+    "firing-fill",
   ];
 
   map.on("click", (e) => {
@@ -808,6 +872,7 @@ async function init() {
   const onStyleReady = () => {
     if (map.getLayer("settlements-built_up-fill")) return; // already applied
     addContextLayers(map);
+    addFiringZoneLayers(map);
     addHistoricalDataLayers(map);
     addSettlementLayers(map);
 

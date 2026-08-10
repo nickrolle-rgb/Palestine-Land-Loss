@@ -411,6 +411,70 @@ def feature(geometry: dict[str, Any], properties: dict[str, Any]) -> dict[str, A
     return {"type": "Feature", "geometry": geometry, "properties": properties}
 
 
+# --------------------------------------------------------------------------
+# Payload normalisation
+# --------------------------------------------------------------------------
+
+_EMPTY = (None, "", [], {})
+
+
+def _evidence_id(ev: dict[str, Any]) -> str:
+    """Stable content hash, so the same citation always gets the same id."""
+    import hashlib
+    import json as _json
+
+    canonical = _json.dumps(ev, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha1(canonical.encode("utf-8")).hexdigest()[:10]
+
+
+def normalise_features(
+    features: list[dict[str, Any]], evidence_table: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Hoist repeated evidence into a shared table and drop empty properties.
+
+    The rule that every feature must carry evidence is unchanged — this only
+    stops us shipping 2,537 byte-identical copies of the same citation, which
+    was 38% of one layer's payload. Features carry `evidence_ref`, a list of ids
+    into the table published in meta.json. A feature whose refs do not resolve
+    is still a bug, and the test suite asserts exactly that.
+
+    Empty values are removed rather than serialised: `oslo_area` was null on
+    every one of those 2,537 features.
+    """
+    out = []
+    for f in features:
+        props = dict(f.get("properties") or {})
+
+        refs: list[str] = []
+        for ev in props.pop("evidence", []) or []:
+            eid = _evidence_id(ev)
+            evidence_table.setdefault(eid, ev)
+            refs.append(eid)
+
+        # Nested stage history carries its own evidence; normalise it too.
+        history = props.get("stage_history")
+        if history:
+            new_history = []
+            for step in history:
+                step = dict(step)
+                step_refs = []
+                for ev in step.pop("evidence", []) or []:
+                    eid = _evidence_id(ev)
+                    evidence_table.setdefault(eid, ev)
+                    step_refs.append(eid)
+                if step_refs:
+                    step["evidence_ref"] = step_refs
+                new_history.append({k: v for k, v in step.items() if v not in _EMPTY})
+            props["stage_history"] = new_history
+
+        props = {k: v for k, v in props.items() if v not in _EMPTY}
+        if refs:
+            props["evidence_ref"] = refs
+
+        out.append({**f, "properties": props})
+    return out
+
+
 def feature_collection(features: list[dict[str, Any]], **meta: Any) -> dict[str, Any]:
     fc: dict[str, Any] = {"type": "FeatureCollection", "features": features}
     if meta:

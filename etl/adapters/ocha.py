@@ -284,6 +284,96 @@ def load_localities(oslo: list[dict[str, Any]]) -> list[Locality]:
     return localities
 
 
+def _clean_label(value: Any) -> str | None:
+    """Firing-zone names come through as mangled Hebrew or numeric codes.
+
+    The shapefile's DBF is not UTF-8 and the codepage is unreliable, so names
+    arrive as things like "309�'". A garbled label is worse than none — it
+    looks like a data error to a reader and invites doubt about everything
+    else — so anything containing replacement characters is dropped and the
+    zone falls back to being identified by its signing date.
+    """
+    text = str(value or "").strip()
+    if not text or "�" in text:
+        return None
+    if not any(c.isalnum() for c in text):
+        return None
+    return text
+
+
+def load_firing_zones() -> list[dict[str, Any]]:
+    """Israeli firing zones — closed military areas, ~18% of the West Bank.
+
+    Every polygon carries the date its closure order was signed, which makes
+    this the only OCHA layer besides the settlements that supports a dated
+    claim. Treated as a mechanism of land loss in its own right rather than
+    context, because a closure order removes access to land as surely as a
+    settlement does.
+    """
+    r = resource("firing_zones")
+    path = download(r.url, r.filename)
+    records, crs = read_zipped_shapefile(str(path), r.shapefile_base, r.source_crs)
+
+    out = []
+    for rec in records:
+        props = rec["properties"]
+        # pyshp returns DBF dates as datetime.date, which json cannot serialise.
+        signed = props.get("SIGN_DATE")
+        signed_iso = signed.isoformat() if hasattr(signed, "isoformat") else None
+        name = _clean_label(props.get("FIRE_NAME"))
+
+        ev = Evidence(
+            source_id="ocha_opt",
+            title="State of Palestine - Israeli Firing Zones (Closed Military Areas)",
+            url=SOURCES["ocha_opt"].url,
+            document_date=signed_iso,
+            retrieved=retrieved_date(r.filename),
+            note="Date is the date the closure order was signed.",
+        )
+        out.append(
+            {
+                "geometry": rec["geometry"],
+                "properties": {
+                    "zone_name": name,
+                    "name": f"Firing zone {name}" if name else "Firing zone (unnumbered)",
+                    "signed_date": signed_iso,
+                    "mechanism": "closed_military_area",
+                    "area_m2": geometry_area_m2(rec["geometry"]),
+                    "source_crs": crs,
+                    "evidence": [ev.to_dict()],
+                },
+            }
+        )
+    return out
+
+
+def load_village_boundaries() -> list[dict[str, Any]]:
+    """Palestinian village boundaries — areal extent, not just a point."""
+    r = resource("village_boundaries")
+    path = download(r.url, r.filename)
+    records, crs = read_zipped_shapefile(str(path), r.shapefile_base, r.source_crs)
+
+    ev = Evidence(
+        source_id="ocha_opt",
+        title="State of Palestine - Village boundary in the West Bank",
+        url=SOURCES["ocha_opt"].url,
+        document_date="2019-07-24",
+        retrieved=retrieved_date(r.filename),
+    )
+    return [
+        {
+            "geometry": rec["geometry"],
+            "properties": {
+                "name": _clean_label(rec["properties"].get("VNAME")) or "Unnamed village",
+                "area_m2": geometry_area_m2(rec["geometry"]),
+                "source_crs": crs,
+                "evidence": [ev.to_dict()],
+            },
+        }
+        for rec in records
+    ]
+
+
 def load_barrier() -> list[dict[str, Any]]:
     r = resource("barrier")
     path = download(r.url, r.filename)

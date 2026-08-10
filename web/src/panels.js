@@ -10,6 +10,18 @@ const esc = (s) =>
 
 const km2 = (m2) => (m2 ? `${(m2 / 1e6).toFixed(2)} km²` : "—");
 
+// Citations are deduplicated into meta.evidence at build time; features carry
+// `evidence_ref` ids. Older inline `evidence` arrays still resolve, so a stale
+// cached payload degrades rather than breaking.
+function resolveEvidence(props, meta) {
+  const table = (meta && meta.evidence) || {};
+  const refs = props.evidence_ref;
+  if (Array.isArray(refs)) {
+    return refs.map((id) => table[id]).filter(Boolean);
+  }
+  return Array.isArray(props.evidence) ? props.evidence : [];
+}
+
 function evidenceList(evidence = []) {
   if (!evidence.length) return `<p class="hint">No evidence attached — this is a bug.</p>`;
   return `<ul class="evidence">${evidence
@@ -28,7 +40,7 @@ function evidenceList(evidence = []) {
     .join("")}</ul>`;
 }
 
-function stageHistoryBlock(history = []) {
+function stageHistoryBlock(history = [], meta) {
   if (!history.length) return "";
   const rows = history
     .slice()
@@ -42,7 +54,7 @@ function stageHistoryBlock(history = []) {
         <span class="meta">${
           ev.valid_from ? `from ${esc(ev.valid_from)}` : "date unknown"
         }${ev.valid_to ? ` to ${esc(ev.valid_to)}` : ""}</span>
-        ${evidenceList(ev.evidence)}
+        ${evidenceList(resolveEvidence(ev, meta))}
       </li>`
     )
     .join("");
@@ -72,7 +84,10 @@ export function renderDetail(feature, meta) {
     try { return JSON.parse(v); } catch { return v; }
   };
   const names = parse(p.names) || {};
-  const evidence = parse(p.evidence) || [];
+  const evidence = resolveEvidence(
+    { ...p, evidence_ref: parse(p.evidence_ref), evidence: parse(p.evidence) },
+    meta
+  );
   const history = parse(p.stage_history) || [];
   const population = parse(p.population) || [];
 
@@ -145,6 +160,29 @@ export function renderDetail(feature, meta) {
     return;
   }
 
+  if (p.mechanism === "closed_military_area") {
+    host.innerHTML = `
+      <span class="kind">Closed military area</span>
+      <h3>${esc(p.name)}</h3>
+      <dl>
+        <dt>Order signed</dt><dd>${esc(p.signed_date || "date not recorded")}</dd>
+        <dt>Area</dt><dd>${km2(p.area_m2)}</dd>
+        <dt>Source CRS</dt><dd><code>${esc(p.source_crs || "—")}</code></dd>
+      </dl>
+      <p class="hint">
+        Land inside a firing zone is closed to Palestinian access. Firing zones
+        cover roughly 18% of the West Bank.
+      </p>
+      <h4>Sources</h4>${evidenceList(evidence)}
+      ${!p.zone_name ? `<div class="warn">
+        This zone's name field was unreadable in the source dataset (the DBF
+        encoding is unreliable). It is identified by its signing date rather than
+        by a possibly garbled label.
+      </div>` : ""}`;
+    document.getElementById("detail").hidden = false;
+    return;
+  }
+
   const extent = EXTENT_STYLE[p.extent_type];
   const unidentified = String(p.name || "").startsWith("Unidentified");
   host.innerHTML = `
@@ -161,7 +199,7 @@ export function renderDetail(feature, meta) {
     </dl>
     <p class="hint">${esc(meta.extent_definitions?.[p.extent_type] || "")}</p>
     ${namesBlock(names)}
-    ${stageHistoryBlock(history)}
+    ${stageHistoryBlock(history, meta)}
     <h4>Sources</h4>${evidenceList(evidence)}
     ${unidentified ? `<div class="warn">
       This polygon has no name in the source dataset. It is shown because the
