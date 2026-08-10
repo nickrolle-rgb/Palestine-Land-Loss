@@ -28,6 +28,16 @@ Then open <http://localhost:8000>.
 or `all`. The Al-Haq crawl is throttled to one request every 1.5s and takes a
 few minutes.
 
+## Deployment
+
+Statically hosted, no build step on the server. `vercel.json` sets
+`outputDirectory` to `web`, so the site root is `web/` and data resolves at
+`/public/data/…` exactly as it does locally.
+
+The generated GeoJSON in `web/public/data/` **is committed**, because there is no
+server-side build to produce it. Re-run `python -m etl.build all` and commit the
+result to refresh the deployed map.
+
 ## What it does
 
 - **Three ways to measure land taken.** Built-up footprint, municipal

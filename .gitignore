@@ -1,11 +1,10 @@
-# Fetched source data — reproducible via `python -m etl.build fetch`
+# Fetched source data — re-fetchable, and the manifest records SHA-256 per file
 data/raw/
 data/interim/
 
-# Generated web payloads
-web/public/data/*.geojson
-web/public/data/*.json
-!web/public/data/.gitkeep
+# Generated web payloads ARE committed. They are build output, but the site is
+# statically hosted with no build step on the server, so the deployed map needs
+# them present in the repository. Regenerate with `python -m etl.build all`.
 
 # Python
 __pycache__/
