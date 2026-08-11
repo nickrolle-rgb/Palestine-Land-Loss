@@ -5,6 +5,7 @@ import {
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
 import { renderAbout, renderDetail } from "./panels.js";
+import { resultsMarkup, search } from "./search.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -940,6 +941,48 @@ function initTimeline(map) {
 
 // --------------------------------------------------------------------------
 
+
+/** Find the loaded feature behind a search result, so the panel can open. */
+function featureById(id) {
+  for (const f of state.data.localities.features) {
+    if (f.properties.locality_id === id) return f;
+  }
+  for (const key of Object.keys(EXTENT_STYLE)) {
+    for (const f of state.data[key].features) {
+      if (f.properties.entity_id === id) return f;
+    }
+  }
+  return null;
+}
+
+function initSearch(map) {
+  const input = $("#search-input");
+  const host = $("#search-results");
+  let token = 0;
+
+  const run = async () => {
+    const query = input.value;
+    const mine = ++token;
+    const results = await search(query);
+    if (mine !== token) return;   // a later keystroke already won
+    host.innerHTML = resultsMarkup(results, query);
+  };
+
+  input.addEventListener("input", run);
+
+  host.addEventListener("click", (e) => {
+    const button = e.target.closest("button[data-id]");
+    if (!button) return;
+    map.flyTo({
+      center: [Number(button.dataset.lon), Number(button.dataset.lat)],
+      zoom: Math.max(map.getZoom(), 13),
+      speed: 1.4,
+    });
+    const feature = featureById(button.dataset.id);
+    if (feature) renderDetail(feature, state.meta, state.oralHistories);
+  });
+}
+
 async function init() {
   await loadAll();
 
@@ -977,6 +1020,7 @@ async function init() {
       initInteraction(map);
       initTimeline(map);
       initSwipeDrag();
+    initSearch(map);
       state.earliestYear = computeEarliestYear();
       uiBuilt = true;
     }

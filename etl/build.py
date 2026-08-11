@@ -26,6 +26,7 @@ from .adapters import poha as poha_adapter
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of, count_vertices, simplify_geometry
 from .merge import merge_localities
+from .search import build_index
 from .schema import (
     EXTENT_DEFINITIONS,
     MECHANISM_LABELS,
@@ -251,6 +252,16 @@ def build_base() -> dict:
             "are withheld rather than plotted."
         ),
     )
+    print("[search] name index")
+    index = build_index(localities, entities)
+    write_json(PROCESSED / "search_index.json", index)
+    scripts = {
+        "arabic": sum(1 for e in index if e.get("a")),
+        "hebrew": sum(1 for e in index if e.get("h")),
+    }
+    print(f"        {len(index)} entries | {scripts['arabic']} with Arabic, "
+          f"{scripts['hebrew']} with Hebrew")
+
     write_json(
         PROCESSED / "oral_histories.json",
         {

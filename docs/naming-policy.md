@@ -44,3 +44,35 @@ record matching two localities is withheld from the map and recorded as
 Names shorter than 5 normalised characters are excluded from the index entirely,
 along with a stoplist (`gaza`, `jerusalem`, `west bank`…), because short generic
 tokens match inside unrelated sentences.
+
+
+## Search
+
+The policy has a practical consequence: a place must be findable by any of its
+names, because a reader will type whichever one they know.
+
+`etl/search.py` builds an index over the English transliteration, the variant
+transliteration from the other source, the Arabic name and the Hebrew name —
+3,236 entries, 1,654 with Arabic and 1,999 with Hebrew. Normalisation happens
+in Python at build time so there is one implementation; the client normalises
+only the query.
+
+Each script needs different handling:
+
+- **Arabic** — source names are vocalised (`خِرْبِة`) and keyboards are not
+  (`خربة`), so tashkeel is stripped, alef forms folded (أ إ آ ٱ → ا), ta marbuta
+  mapped to ha and alef maqsura to ya. Without this an Arabic search matches
+  almost nothing.
+- **Hebrew** — niqqud stripped, for the same reason.
+- **Latin** — the transliteration folding built for merging is reused, so
+  `Bayt Mirsim` finds `Beit Mirsim` and `Beitunya` finds `Beituniya`.
+
+**Deduplication is type-aware, and that matters.** OCHA and B'Tselem both
+describe Ariel, so it would otherwise appear twice 800 m apart; those collapse.
+But Susiya is a Palestinian village *and* an Israeli settlement 1.2 km apart,
+and searching it must return both, correctly labelled. Folding those together
+to tidy the results would erase the distinction the map exists to draw.
+
+**Known gap:** Jerusalem carries an Arabic name but no Hebrew one in the source,
+so `ירושלים` returns nothing. That is a gap in the data, not in the matcher, and
+it is not filled in by hand.
