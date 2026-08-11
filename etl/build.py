@@ -24,6 +24,7 @@ from .adapters import ocha
 from .adapters import ocha_violence
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of, count_vertices, simplify_geometry
+from .merge import merge_localities
 from .schema import (
     EXTENT_DEFINITIONS,
     MECHANISM_LABELS,
@@ -149,10 +150,8 @@ def build_base() -> dict:
         status = "EMPTY — source not yet available" if not feats else f"{len(feats)} features"
         print(f"       settlements_{extent_type.value}.geojson: {status}")
 
-    write_layer(
-        "localities.geojson",
-        [feature(l.geometry, l.properties()) for l in localities],
-    )
+    # Localities are written after the historical set is loaded, so the two
+    # overlapping sources can be reconciled into one layer. See the write below.
 
     print("[base] oslo_areas.geojson")
     write_layer(
@@ -203,15 +202,46 @@ def build_base() -> dict:
     # --- historical: the "what was there before" side of land loss ---
     print("[hist] Palestine Open Maps localities")
     hist = historical.load_localities()
-    depop = [l for l in hist if l.depopulated_1948]
-    print(f"       {len(hist)} historic localities; {len(depop)} depopulated 1947-50")
+    print(f"       {len(hist)} historic localities loaded")
+
+    print("[merge] reconciling the two locality sources")
+    localities, merge_stats = merge_localities(localities, hist)
+    depop = [l for l in localities if l.depopulated_1948]
+    print(f"        {merge_stats['current_records']} current + "
+          f"{merge_stats['historic_records']} historic -> "
+          f"{merge_stats['output_localities']} localities "
+          f"({merge_stats['merged_pairs']} merged)")
+    print(f"        withheld {merge_stats['withheld_coordinate_conflicts']} records "
+          f"sharing coordinates with a differently-named locality")
+    if merge_stats["same_name_but_too_far_to_merge"]:
+        print(f"        {merge_stats['same_name_but_too_far_to_merge']} same-name pairs "
+              f"too far apart to merge; left separate")
+    print(f"        {len(depop)} depopulated 1947-50")
+
     write_layer(
-        "historic_localities.geojson",
-        [feature(l.geometry, l.properties()) for l in hist],
-        source="Palestine Open Maps",
-        total=len(hist),
+        "localities.geojson",
+        [feature(l.geometry, l.properties()) for l in localities],
+        sources=["UN OCHA oPt", "Palestine Open Maps"],
+        total=len(localities),
+        merged_pairs=merge_stats["merged_pairs"],
         depopulated_1948=len(depop),
-        licence_note="Publisher declares no licence; permission request pending.",
+        withheld_coordinate_conflicts=merge_stats["withheld_coordinate_conflicts"],
+        note=(
+            "One locality per place. Where OCHA and Palestine Open Maps both "
+            "recorded a locality, the records are merged and both are cited. "
+            "Records whose coordinates collide with a differently-named locality "
+            "are withheld rather than plotted."
+        ),
+    )
+    write_json(
+        PROCESSED / "locality_conflicts.json",
+        {
+            "count": merge_stats["withheld_coordinate_conflicts"],
+            "note": "Withheld: these sit on the exact coordinates of a "
+                    "differently-named locality, so at least one position is wrong.",
+            "records": merge_stats["conflict_detail"],
+            "same_name_but_too_far_to_merge": merge_stats["ambiguous_detail"],
+        },
     )
 
     print("[hist] Mandatory Palestine boundary")
@@ -238,7 +268,7 @@ def build_base() -> dict:
         "firing_zones": len(firing),
         "firing_zones_km2": round(firing_km2, 1),
         "village_boundaries": len(villages),
-        "historic_localities": len(hist),
+        "locality_merge": {k: v for k, v in merge_stats.items() if not k.endswith("_detail")},
         "depopulated_1948": len(depop),
         "mandate_boundary": bool(mandate),
         "btselem_entities": bts_stats,

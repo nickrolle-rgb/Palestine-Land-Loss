@@ -12,8 +12,10 @@ Known problems not yet fixed. These are also surfaced in the UI.
 
 | Item | Detail | Blocked on |
 |---|---|---|
-| 18 unnamed East Jerusalem settlements | The Peace Now/OCHA layer names only Atarot and Ramot Allon among the 20 EJ settlements. The rest render as `Unidentified settlement (gid-NNN)`. | Manual identification against a named reference |
+| 6 unnamed East Jerusalem settlements | Was 18; 13 identified from Wikidata by containment (see below). `gid-760`, at 2.0 km² the largest unnamed polygon, is among those remaining. | A named reference with geometry — B'Tselem or OSM |
 | 6 unnamed orphan polygons | Very small polygons (≤0.02 km²) with neither a name nor a usable `GIS_ID`. May be fragments rather than settlements. | Inspection |
+| 16 withheld locality coordinate conflicts | Records sitting on the exact coordinates of a differently-named locality. Mostly Bedouin communities recorded at a neighbouring village's position. | Reporting upstream to OCHA and Palestine Open Maps |
+| 332 unnamed municipal polygons | B'Tselem's municipal file carries no usable join key; 88 of 420 named by containment. | Asking B'Tselem for a keyed version |
 | `Region` field typo in source | OCHA's communities layer contains the literal value `West Bsnk`. Normalised at ingest, not propagated. | Upstream — worth reporting to OCHA |
 | Dirty `pop2017` values | Values include `NA` and cross-references such as `with Ar Ram`. Non-numeric values are preserved as notes rather than coerced. | Upstream |
 | Barrier alignment is January 2018 | Latest openly published OCHA alignment. Labelled with its own date. | Newer OCHA release |
@@ -33,6 +35,49 @@ next build, and note in the entity's evidence that the name came from the
 override source rather than from OCHA.
 
 ## Changes
+
+**2026-08-11 — the two locality datasets reconciled into one.** OCHA's
+communities layer and Palestine Open Maps' locality database both record
+Palestinian localities. Drawn as separate map layers they produced visible
+double dots — Kobar, Burham, Deir Nidham and Abu Shukheidim each appearing
+twice — and a click landed on whichever layer was on top, so the detail panel
+could name a different place from the one under the cursor.
+
+Now merged in the ETL: 850 current + 2,527 historic records resolve to **3,024
+localities**, with **311 pairs merged**. A merged locality keeps OCHA's identity
+and PCODE, Palestine Open Maps' history, both name variants and **both
+citations**.
+
+Merging requires the same name within **600 m**. That radius is not arbitrary:
+same-name distances are sharply bimodal — half within 165 m, three quarters
+within 376 m, then a gap, then a cluster beyond 5 km that is genuinely different
+places sharing a name (Palestine has several localities called Zayta). 600 m
+sits in the empty band. 25 same-name pairs fall between 600 m and 1,500 m and
+are left separate rather than merged on a hunch.
+
+**16 records are withheld for coordinate conflicts.** These sit on the exact
+coordinates of a differently-named locality, so at least one position is wrong.
+Where one source outranks the other, the authoritative record survives — this is
+the reported `al-Zaytouneh` / `Abu Shukheidim` case, where Palestine Open Maps
+gave al-Zaytouneh the coordinates of Abu Shukheidim while its own Abu Shukheidim
+sat 200 m away. Where neither outranks the other — `Aqada` and `al-Bayada`, two
+Palestine Open Maps records with adjacent ids and identical coordinates — both
+are withheld, because keeping an arbitrary one would be a coin toss presented as
+a fact.
+
+Most of the remainder are Bedouin communities recorded at a neighbouring
+village's coordinates (`Arab al-Jahalin` at Abu Dis, `al-Ka'abina` at Anata).
+Worth reporting to both publishers.
+
+Distinguishing a duplicate from a conflict needed more than exact name matching.
+Transliteration varies systematically between the two sources — Bayt/Beit,
+Dayr/Deir, Ayn/Ein, Khirbat/Khirbet — and `bayt mirsim` against `beit mirsim`
+scores 0.818 on a similarity ratio, just under the 0.82 threshold. Those
+equivalences are folded explicitly rather than by loosening the threshold, which
+would have started merging genuinely different places. Clan qualifiers in
+brackets are set aside for comparison too. Explicit folding took the withheld
+count from 42 to 16, all real.
+
 
 **2026-08-11 — B'Tselem data ingested; four source quirks handled.**
 B'Tselem supplied four GeoJSON files under their licence for non-commercial use.

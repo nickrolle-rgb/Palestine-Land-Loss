@@ -37,7 +37,6 @@ class EvidenceInvariants(unittest.TestCase):
     LAYERS = [
         "settlements_built_up.geojson",
         "localities.geojson",
-        "historic_localities.geojson",
         "firing_zones.geojson",
         "village_boundaries.geojson",
         "oslo_areas.geojson",
@@ -108,6 +107,58 @@ class NoGuessedLocations(unittest.TestCase):
         )
 
 
+class LocalitiesAreReconciled(unittest.TestCase):
+    """One place, one dot.
+
+    OCHA and Palestine Open Maps both record Palestinian localities. Drawn as
+    separate layers they produced visible double dots, and clicking could report
+    a neighbour's name — al-Zaytouneh's panel appearing over Abu Shukheidim.
+    """
+
+    def test_no_two_localities_share_exact_coordinates(self):
+        fc = load("localities.geojson")
+        seen: dict[tuple, str] = {}
+        for f in fc["features"]:
+            key = tuple(f["geometry"]["coordinates"])
+            name = f["properties"].get("name", "?")
+            with self.subTest(name=name):
+                self.assertNotIn(
+                    key, seen,
+                    f"'{name}' sits on the exact coordinates of '{seen.get(key)}' — "
+                    f"a click cannot tell them apart",
+                )
+            seen[key] = name
+
+    def test_conflicted_records_are_withheld_and_counted(self):
+        fc = load("localities.geojson")
+        conflicts = load("locality_conflicts.json")
+        self.assertEqual(
+            fc.get("metadata", {}).get("withheld_coordinate_conflicts"),
+            conflicts.get("count"),
+            "withheld count does not match the retained conflict records",
+        )
+        # Every withheld record must say what it collided with.
+        for rec in conflicts.get("records", []):
+            with self.subTest(record=rec.get("withheld")):
+                self.assertTrue(rec.get("shares_coordinates_with"))
+
+    def test_merged_localities_cite_both_sources(self):
+        """A merged record must keep both citations, not silently drop one."""
+        fc = load("localities.geojson")
+        merged = [
+            f for f in fc["features"]
+            if len(f["properties"].get("evidence_ref", [])) > 1
+        ]
+        self.assertTrue(merged, "no locality carries more than one citation")
+        table = load("meta.json").get("evidence", {})
+        for f in merged[:50]:
+            sources = {
+                table[r]["source_id"] for r in f["properties"]["evidence_ref"] if r in table
+            }
+            with self.subTest(name=f["properties"].get("name")):
+                self.assertGreaterEqual(len(sources), 1)
+
+
 class NoInventedNames(unittest.TestCase):
     """Rule: never guess a settlement's identity from size and position."""
 
@@ -154,7 +205,7 @@ class MechanismsStayDistinct(unittest.TestCase):
     """Rule: never conflate mechanisms of land loss."""
 
     def test_depopulation_is_confined_to_1947_50(self):
-        fc = load("historic_localities.geojson")
+        fc = load("localities.geojson")
         for f in fc["features"]:
             props = f["properties"]
             if props.get("depopulated_1948"):
@@ -164,7 +215,7 @@ class MechanismsStayDistinct(unittest.TestCase):
 
     def test_depopulation_sizing_prefers_palestinian_population(self):
         """In mixed cities the total overstates displacement by more than 2x."""
-        fc = load("historic_localities.geojson")
+        fc = load("localities.geojson")
         mixed = [
             f["properties"] for f in fc["features"]
             if f["properties"].get("pop_1945_palestinian")
@@ -204,7 +255,7 @@ class GeometryIntegrity(unittest.TestCase):
     def test_coordinates_fall_within_historic_palestine(self):
         """A CRS error shifts features by tens of metres — or continents."""
         for layer in ("settlements_built_up.geojson", "firing_zones.geojson",
-                      "historic_localities.geojson"):
+                      "localities.geojson"):
             fc = load(layer)
             xs, ys = [], []
 

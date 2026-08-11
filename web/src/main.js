@@ -43,7 +43,6 @@ async function loadAll() {
     oslo: "oslo_areas.geojson",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
-    historic: "historic_localities.geojson",
     mandate: "mandate_palestine.geojson",
     firing: "firing_zones.geojson",
     villages: "village_boundaries.geojson",
@@ -159,14 +158,18 @@ function addHistoricalDataLayers(map) {
     },
   });
 
-  map.addSource("historic", { type: "geojson", data: state.data.historic });
+  // One locality source, two views of it. The OCHA and Palestine Open Maps sets
+  // were previously drawn as separate layers and produced visible double dots;
+  // they are now reconciled in the ETL, so a place appears once and clicking it
+  // cannot report a neighbour's name.
+  map.addSource("localities", { type: "geojson", data: state.data.localities });
 
   // Depopulated localities, styled apart from settlements on purpose — a
   // different mechanism with a different legal character and evidence base.
   map.addLayer({
-    id: "historic-depopulated",
+    id: "localities-depopulated",
     type: "circle",
-    source: "historic",
+    source: "localities",
     filter: ["==", ["get", "depopulated_1948"], true],
     layout: { visibility: "none" },
     paint: {
@@ -189,15 +192,12 @@ function addHistoricalDataLayers(map) {
     },
   });
 
-  // Localities still standing, for contrast.
+  // Localities still standing, for contrast with what was lost.
   map.addLayer({
-    id: "historic-remaining",
+    id: "localities-standing",
     type: "circle",
-    source: "historic",
-    filter: ["all",
-      ["!=", ["get", "depopulated_1948"], true],
-      ["==", ["get", "group_1945"], "Palestinian"],
-    ],
+    source: "localities",
+    filter: ["!=", ["get", "depopulated_1948"], true],
     layout: { visibility: "none" },
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 1.6, 13, 5],
@@ -205,6 +205,33 @@ function addHistoricalDataLayers(map) {
       "circle-stroke-color": "#052e16",
       "circle-stroke-width": 0.8,
       "circle-opacity": 0.7,
+    },
+  });
+
+  map.addLayer({
+    id: "localities-label",
+    type: "symbol",
+    source: "localities",
+    minzoom: 11,
+    layout: {
+      visibility: "none",
+      // Naming policy: the Palestinian/Arabic name alongside the
+      // transliteration wherever the merged record carries both.
+      "text-field": [
+        "case",
+        ["all", ["has", "names"], ["!=", ["get", "arabic", ["get", "names"]], null]],
+        ["concat", ["get", "name"], "\n", ["get", "arabic", ["get", "names"]]],
+        ["get", "name"],
+      ],
+      "text-size": 10.5,
+      "text-offset": [0, 1.1],
+      "text-anchor": "top",
+      "text-allow-overlap": false,
+    },
+    paint: {
+      "text-color": "#a7f3d0",
+      "text-halo-color": "#04120c",
+      "text-halo-width": 1.4,
     },
   });
 }
@@ -317,46 +344,6 @@ function addContextLayers(map) {
     },
   });
 
-  map.addSource("localities", { type: "geojson", data: state.data.localities });
-  map.addLayer({
-    id: "localities-point",
-    type: "circle",
-    source: "localities",
-    layout: { visibility: "none" },
-    paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 2.5, 15, 6],
-      "circle-color": "#34d399",
-      "circle-stroke-color": "#052e16",
-      "circle-stroke-width": 1,
-      "circle-opacity": 0.9,
-    },
-  });
-  map.addLayer({
-    id: "localities-label",
-    type: "symbol",
-    source: "localities",
-    minzoom: 11,
-    layout: {
-      visibility: "none",
-      // Naming policy: Palestinian/Arabic name shown alongside the
-      // transliteration wherever the source carries both.
-      "text-field": [
-        "case",
-        ["all", ["has", "names"], ["!=", ["get", "arabic", ["get", "names"]], null]],
-        ["concat", ["get", "name"], "\n", ["get", "arabic", ["get", "names"]]],
-        ["get", "name"],
-      ],
-      "text-size": 10.5,
-      "text-offset": [0, 1.1],
-      "text-anchor": "top",
-      "text-allow-overlap": false,
-    },
-    paint: {
-      "text-color": "#a7f3d0",
-      "text-halo-color": "#04120c",
-      "text-halo-width": 1.4,
-    },
-  });
 }
 
 function addSettlementLayers(map) {
@@ -645,7 +632,6 @@ function buildContextToggles(map) {
   const rows = [
     { id: "oslo", label: "Oslo areas (A / B / C, H1, H2)", layers: ["oslo-fill", "oslo-line"], colour: "#64748b" },
     { id: "barrier", label: "Separation Barrier (Jan 2018)", layers: ["barrier-line"], colour: "#e879f9" },
-    { id: "localities", label: "Palestinian localities", layers: ["localities-point", "localities-label"], colour: "#34d399" },
   ];
   for (const r of rows) {
     const empty = r.id === "barrier" && state.data.barrier.features.length === 0;
@@ -663,7 +649,7 @@ function buildContextToggles(map) {
 
 function buildMechanismToggles(map) {
   const host = $("#mechanism-toggles");
-  const meta = state.data.historic.metadata || {};
+  const meta = state.data.localities.metadata || {};
 
   const rows = [
     {
@@ -674,15 +660,18 @@ function buildMechanismToggles(map) {
         "Localities depopulated during and after the 1948 war, sized by their " +
         "1945 population. A documented historical event — a different legal " +
         "category from the settlements.",
-      layers: ["historic-depopulated"],
+      layers: ["localities-depopulated"],
       note: `${meta.depopulated_1948 ?? 0}`,
     },
     {
       id: "remaining",
       colour: "#34d399",
-      label: "Palestinian localities still standing",
-      definition: "For contrast with what was lost.",
-      layers: ["historic-remaining"],
+      label: "Palestinian localities (present day)",
+      definition:
+        "Localities still standing, for contrast with what was lost. OCHA and " +
+        "Palestine Open Maps records are reconciled into one point per place, so " +
+        "a locality is never drawn twice.",
+      layers: ["localities-standing", "localities-label"],
       note: "",
     },
     {
@@ -847,9 +836,8 @@ function initInteraction(map) {
     "settlements-municipal-fill",
     "settlements-regional_council-fill",
     "incidents-point",
-    "localities-point",
-    "historic-depopulated",
-    "historic-remaining",
+    "localities-depopulated",
+    "localities-standing",
     "firing-fill",
     "resource-point",
   ];
