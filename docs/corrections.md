@@ -36,6 +36,36 @@ override source rather than from OCHA.
 
 ## Changes
 
+**2026-08-12 — the municipal jurisdiction layer was populated but never drawn.**
+Its checkbox did nothing. The 420 polygons were in the file and loaded fine, but
+`applyTime()` drops any feature whose planning stage resolves to null, and a
+municipal boundary has no stage history — it is a jurisdiction, not a settlement
+moving through a pipeline. Every polygon was silently filtered out on each
+render. Features without a stage history are now shown regardless of the slider,
+honouring `declared_date` where the source provides one.
+
+Worth noting how this hid: the data was correct, the layer existed, the toggle
+worked, and nothing errored. Only the map was empty.
+
+**2026-08-12 — Palestinian Oral History Archive linked from localities.** 726
+recorded interviews across 133 villages, held by the American University of
+Beirut Libraries and indexed by Palestine Open Maps. The join is exact — POM
+files them under the same slug their locality database uses — so no name
+matching or proximity is involved.
+
+Licence is CC BY-NC-ND 4.0, so the same discipline as Al-Haq applies: title,
+year, duration, language and record URL only. The archive's descriptions and its
+indexed contents are its own editorial work and are not reproduced. Interview
+metadata lives in `oral_histories.json` and is looked up on click rather than
+carried on every map feature.
+
+**2026-08-12 — payload cut from 6.5 MB to 5.5 MB.** Extent layers are now
+simplified at about 5 m, below the accuracy of the source boundaries and
+sub-pixel until zoom 18. Municipal halved, from 2,116 KB to 1,019 KB. Reported
+areas are unaffected: they are computed from source geometry before
+simplification and stored on the feature, never recomputed from what is drawn.
+
+
 **2026-08-12 — localities carry a historical position as well as a present-day
 one.** Points sat away from the villages they name on the historical sheets.
 Palestine Open Maps records the 1945 village; OCHA records the present-day

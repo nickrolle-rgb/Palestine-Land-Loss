@@ -22,6 +22,7 @@ from .adapters import btselem
 from .adapters import historical
 from .adapters import ocha
 from .adapters import ocha_violence
+from .adapters import poha as poha_adapter
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of, count_vertices, simplify_geometry
 from .merge import merge_localities
@@ -50,6 +51,12 @@ EJ_VIEW = {"center": [35.2310, 31.7800], "zoom": 11.2}
 # Measurement layers (settlement extents) are never simplified, and areas are
 # computed from source geometry before any simplification happens.
 CONTEXT_TOLERANCE = 0.0001
+
+# Extent layers are measurements, so they get a far finer tolerance — about 5 m,
+# below the accuracy of the source boundaries themselves and sub-pixel until
+# zoom 18. Reported areas are unaffected: they are computed from source geometry
+# before this runs and stored on the feature, never recomputed from what is drawn.
+MEASUREMENT_TOLERANCE = 0.00005
 
 # Shared citation table, published once in meta.json rather than repeated on
 # every feature. Populated as layers are written.
@@ -142,7 +149,7 @@ def build_base() -> dict:
         extent_counts[extent_type.value] = len(feats)
         write_layer(
             f"settlements_{extent_type.value}.geojson",
-            feats,
+            _simplify_features(feats, MEASUREMENT_TOLERANCE) if feats else feats,
             extent_type=extent_type.value,
             definition=EXTENT_DEFINITIONS[extent_type],
             count=len(feats),
@@ -204,6 +211,17 @@ def build_base() -> dict:
     hist = historical.load_localities()
     print(f"       {len(hist)} historic localities loaded")
 
+    print("[poha] Palestinian Oral History Archive")
+    interviews = poha_adapter.load_oral_histories()
+    attached = 0
+    for loc in hist:
+        found = interviews.get(loc.slug or "")
+        if found:
+            loc.oral_histories = found
+            attached += 1
+    print(f"       {sum(len(v) for v in interviews.values())} interviews across "
+          f"{len(interviews)} villages; attached to {attached} localities")
+
     print("[merge] reconciling the two locality sources")
     localities, merge_stats = merge_localities(localities, hist)
     depop = [l for l in localities if l.depopulated_1948]
@@ -232,6 +250,18 @@ def build_base() -> dict:
             "Records whose coordinates collide with a differently-named locality "
             "are withheld rather than plotted."
         ),
+    )
+    write_json(
+        PROCESSED / "oral_histories.json",
+        {
+            "source": "Palestinian Oral History Archive, American University of Beirut Libraries",
+            "licence": "CC BY-NC-ND 4.0",
+            "note": "Metadata and links only. The archive's descriptions and indexed "
+                    "contents are not reproduced; each interview links to AUB Libraries.",
+            "localities": {
+                l.locality_id: l.oral_histories for l in localities if l.oral_histories
+            },
+        },
     )
     write_json(
         PROCESSED / "locality_conflicts.json",

@@ -49,6 +49,8 @@ async function loadAll() {
     villages: "village_boundaries.geojson",
     resource: "resource_destruction.geojson",
   };
+  // Interview metadata is looked up on click, not carried on every map feature.
+  state.oralHistories = (await loadJSON("oral_histories.json", { optional: true })) || { localities: {} };
   await Promise.all(
     Object.entries(names).map(async ([key, file]) => {
       state.data[key] = (await loadJSON(file, { optional: true })) || EMPTY;
@@ -81,9 +83,18 @@ function applyTime(map) {
       features: fc.features
         .map((f) => {
           const stage = stageAt(f.properties, state.year);
-          return stage === null
-            ? null
-            : { ...f, properties: { ...f.properties, stage_at: stage } };
+          if (stage !== null) {
+            return { ...f, properties: { ...f.properties, stage_at: stage } };
+          }
+          // Not everything on these layers is a settlement moving through the
+          // planning pipeline. A municipal boundary is a jurisdiction that
+          // either exists or does not, and it carries no stage history — so
+          // filtering it by stage silently emptied the layer and left its
+          // checkbox doing nothing. Where the source gives a declaration date,
+          // honour that instead; otherwise the boundary is simply present.
+          const declared = f.properties.declared_date;
+          if (declared && Number(declared.slice(0, 4)) > state.year) return null;
+          return f;
         })
         .filter(Boolean),
     };
@@ -900,7 +911,7 @@ function initInteraction(map) {
       layers: clickable.filter((l) => map.getLayer(l)),
     });
     if (!hits.length) return;
-    renderDetail(hits[0], state.meta);
+    renderDetail(hits[0], state.meta, state.oralHistories);
   });
 
   for (const layer of clickable) {

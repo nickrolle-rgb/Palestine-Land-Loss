@@ -178,6 +178,25 @@ SOURCES: dict[str, Source] = {
             "attribution obligation, but it is credited anyway."
         ),
     ),
+    "poha": Source(
+        source_id="poha",
+        name="Palestinian Oral History Archive",
+        publisher="American University of Beirut Libraries",
+        licence="CC BY-NC-ND 4.0 — attribution, non-commercial, no derivatives",
+        url="https://libraries.aub.edu.lb/poha/",
+        enabled=True,
+        attribution="Palestinian Oral History Archive, American University of Beirut Libraries",
+        currency_note="Interviews recorded from 2002 onwards; indexed via Palestine Open Maps.",
+        notes=(
+            "726 recorded interviews across 133 villages, joined to localities on "
+            "Palestine Open Maps' slug — an exact key, so no name matching or "
+            "proximity guessing is involved. "
+            "NoDerivatives governs what we may store: title, year, duration, "
+            "language and record URL only. The archive's own descriptions and its "
+            "indexed contents are its editorial work and are not reproduced; every "
+            "interview links back to AUB Libraries."
+        ),
+    ),
     "historical_basemaps": Source(
         source_id="historical_basemaps",
         name="Historical Basemaps — world boundaries by year",

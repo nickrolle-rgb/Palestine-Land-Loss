@@ -327,6 +327,8 @@ class Locality:
     # Where the historical sources place this locality, when that differs from
     # its present-day position. See merge.py.
     historic_point: list[float] | None = None
+    slug: str | None = None                    # Palestine Open Maps key
+    oral_histories: list[dict[str, Any]] = field(default_factory=list)
     references: dict[str, str] = field(default_factory=dict)  # external cross-refs
     evidence: list[Evidence] = field(default_factory=list)
 
@@ -367,6 +369,10 @@ class Locality:
             "group_now": self.group_now,
             "mechanism": self.mechanism.value if self.mechanism else None,
             "historic_coordinates": self.historic_point,
+            # The interviews themselves live in oral_histories.json, keyed by
+            # locality id. Only the count travels on the map feature — 726 records
+            # of interview metadata do not belong in a layer drawn at every pan.
+            "oral_history_count": len(self.oral_histories) or None,
             "references": self.references,
             "evidence": [e.to_dict() for e in self.evidence],
         }

@@ -156,6 +156,7 @@ def load_localities() -> list[Locality]:
                     hebrew=(r.get("name_he") or "").strip() or None,
                 ),
                 geometry={"type": "Point", "coordinates": [round(lng, 6), round(lat, 6)]},
+                slug=(r.get("slug") or "").strip() or None,
                 district=(r.get("district_1945") or "").strip() or None,
                 subdistrict=(r.get("subdistrict_1945") or "").strip() or None,
                 population=pops,

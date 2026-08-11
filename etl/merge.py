@@ -182,6 +182,8 @@ def _merge_pair(current: Locality, historic: Locality) -> Locality:
         group_1945=historic.group_1945,
         group_now=historic.group_now,
         mechanism=historic.mechanism,
+        slug=historic.slug or current.slug,
+        oral_histories=historic.oral_histories or current.oral_histories,
         references={**historic.references, **current.references},
         # The two sources place the same town differently: Palestine Open Maps
         # marks the 1945 village, OCHA the present-day administrative centre.

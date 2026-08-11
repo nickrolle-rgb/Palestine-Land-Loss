@@ -73,7 +73,32 @@ function namesBlock(names = {}) {
     .join("")}</dl>`;
 }
 
-export function renderDetail(feature, meta) {
+
+// People who were born in these places, recorded in their own voice. Held by
+// the Palestinian Oral History Archive at AUB Libraries under CC BY-NC-ND, so
+// this lists title, year and duration and links out — the archive's own
+// descriptions and indexed contents are not reproduced here.
+function oralHistoryBlock(props, oralHistories) {
+  const list = ((oralHistories || {}).localities || {})[props.locality_id];
+  if (!list || !list.length) return "";
+  const rows = list
+    .slice(0, 12)
+    .map((i) => {
+      const meta = [i.year, i.duration, i.language].filter(Boolean).join(" · ");
+      return `<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>` +
+        `<span class="meta">${esc(meta)}</span></li>`;
+    })
+    .join("");
+  const more = list.length > 12
+    ? `<p class="hint">${list.length - 12} further interviews at the archive.</p>`
+    : "";
+  return `<h4>Oral history — ${list.length} interview${list.length === 1 ? "" : "s"}</h4>
+    <ul class="evidence">${rows}</ul>${more}
+    <p class="hint">Palestinian Oral History Archive, American University of Beirut
+    Libraries. CC BY-NC-ND 4.0 — listed and linked, not reproduced.</p>`;
+}
+
+export function renderDetail(feature, meta, oralHistories) {
   const p = feature.properties;
   const host = document.getElementById("detail-body");
 
@@ -194,6 +219,7 @@ export function renderDetail(feature, meta) {
         : ""}
       ${namesBlock(names)}
       ${refLinks ? `<h4>Further documentation</h4><ul class="evidence">${refLinks}</ul>` : ""}
+      ${oralHistoryBlock(p, oralHistories)}
       <h4>Sources</h4>${evidenceList(evidence)}
       ${p.depopulated_1948 ? `<div class="warn">
         Depopulation is a distinct mechanism from post-1967 settlement, with a
