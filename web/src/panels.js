@@ -111,6 +111,50 @@ export function renderDetail(feature, meta) {
     return;
   }
 
+  // Resource-destruction features are keyed to a locality and so also carry
+  // locality_id. This branch must come first or they render as plain localities.
+  if (p.record_count !== undefined && p.violation_counts !== undefined) {
+    const resources = parse(p.resource_counts) || {};
+    const labels = parse(p.resource_labels) || {};
+    const violations = parse(p.violation_counts) || {};
+
+    const resourceRows = Object.entries(resources)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `<dt>${esc(labels[k] || k)}</dt><dd>${v}</dd>`)
+      .join("");
+    const violationRows = Object.entries(violations)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([k, v]) => `<li>${esc(k)} <span class="meta">${v}</span></li>`)
+      .join("");
+
+    host.innerHTML = `
+      <span class="kind">Destruction of resource access</span>
+      <h3>${esc(p.name)}</h3>
+      <dl>
+        <dt>Recorded incidents</dt><dd>${p.record_count}</dd>
+        <dt>District</dt><dd>${esc(p.district || "—")}</dd>
+        <dt>Period</dt><dd>${esc(p.first_recorded || "?")} to ${esc(p.last_recorded || "?")}</dd>
+      </dl>
+      ${resourceRows ? `<h4>Resources affected</h4><dl>${resourceRows}</dl>` : ""}
+      ${p.uncategorised ? `<p class="hint">${p.uncategorised} record${
+        p.uncategorised === 1 ? "" : "s"
+      } did not match a resource category and are counted separately rather than
+      forced into one.</p>` : ""}
+      ${violationRows ? `<h4>Violation types</h4><ul class="evidence">${violationRows}</ul>` : ""}
+      ${namesBlock(names)}
+      <h4>Sources</h4>${evidenceList(evidence)}
+      <div class="warn">
+        Counts are incidents recorded, not quantities destroyed. Coverage is
+        Masafer Yatta in 2025 only — absence elsewhere on this map means the area
+        is not covered by this monitoring, not that nothing happened. The source
+        records "farmland, crops, or irrigation systems"; it does not distinguish
+        olive groves or vineyards, so neither does this panel.
+      </div>`;
+    document.getElementById("detail").hidden = false;
+    return;
+  }
+
   if (p.locality_id) {
     const refs = parse(p.references) || {};
     // Population trajectory is the point for depopulated places: it shows what

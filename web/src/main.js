@@ -45,6 +45,7 @@ async function loadAll() {
     mandate: "mandate_palestine.geojson",
     firing: "firing_zones.geojson",
     villages: "village_boundaries.geojson",
+    resource: "resource_destruction.geojson",
   };
   await Promise.all(
     Object.entries(names).map(async ([key, file]) => {
@@ -245,6 +246,27 @@ function addFiringZoneLayers(map) {
     source: "villages",
     layout: { visibility: "none" },
     paint: { "line-color": "#34d399", "line-width": 0.8, "line-opacity": 0.6 },
+  });
+}
+
+function addResourceLayers(map) {
+  map.addSource("resource", { type: "geojson", data: state.data.resource });
+  map.addLayer({
+    id: "resource-point",
+    type: "circle",
+    source: "resource",
+    layout: { visibility: "none" },
+    paint: {
+      "circle-radius": [
+        "interpolate", ["linear"], ["zoom"],
+        8, ["interpolate", ["linear"], ["get", "record_count"], 0, 3, 400, 14],
+        13, ["interpolate", ["linear"], ["get", "record_count"], 0, 6, 400, 30],
+      ],
+      "circle-color": "#22d3ee",
+      "circle-stroke-color": "#083344",
+      "circle-stroke-width": 1.5,
+      "circle-opacity": 0.6,
+    },
   });
 }
 
@@ -662,6 +684,19 @@ function buildMechanismToggles(map) {
       note: "",
     },
     {
+      id: "resource",
+      colour: "#22d3ee",
+      label: "Destruction of resource access",
+      definition:
+        `Water, farmland, livestock, homes and property. ` +
+        `${(state.data.resource.metadata || {}).total_records ?? 0} verified OCHA ` +
+        `records. Sized by incidents per locality. ` +
+        `<strong>Masafer Yatta only, 2025 only</strong> — absence elsewhere means ` +
+        `not monitored, not that nothing happened.`,
+      layers: ["resource-point"],
+      note: `${(state.data.resource.metadata || {}).localities_plotted ?? 0}`,
+    },
+    {
       id: "firing",
       colour: "#f97316",
       label: "Closed military areas",
@@ -814,6 +849,7 @@ function initInteraction(map) {
     "historic-depopulated",
     "historic-remaining",
     "firing-fill",
+    "resource-point",
   ];
 
   map.on("click", (e) => {
@@ -873,6 +909,7 @@ async function init() {
     if (map.getLayer("settlements-built_up-fill")) return; // already applied
     addContextLayers(map);
     addFiringZoneLayers(map);
+    addResourceLayers(map);
     addHistoricalDataLayers(map);
     addSettlementLayers(map);
 

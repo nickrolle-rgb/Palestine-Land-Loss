@@ -134,7 +134,33 @@ Both must be resolved before publication. Neither is currently disabled, because
 the alternative is shipping a land-loss map with no historical layer at all — but
 this is a deliberate, recorded risk rather than an oversight.
 
-## 9. Al-Haq coverage
+## 9. Resource destruction — covered for one area only
+
+The map shows destruction of resource access (water, farmland, livestock, homes,
+property) from OCHA's field-based monitoring: 2,904 verified records for 2025.
+
+**It covers Masafer Yatta only** — 27 localities in the South Hebron Hills — and
+**2025 only**. Twenty-four localities are plotted; three are withheld because
+they do not resolve to exactly one entry in OCHA's own communities gazetteer,
+taking 385 records with them. The largest of those, **Umm Dhorit** (370 records),
+is genuinely absent from the OCHA Palestinian Communities layer — a mismatch
+between two OCHA datasets, worth reporting upstream.
+
+The UI states the coverage limit wherever the layer appears. This matters more
+than usual: on a map, an empty area reads as "nothing happened" unless it is
+explicitly labelled "not monitored".
+
+The source's agricultural category is "farmland, crops, or irrigation systems".
+It does **not** distinguish olive groves or vineyards, and neither does this map.
+Naming crops the source does not name would be an invention.
+
+**To close:** OCHA's demolition and displacement database is the West Bank-wide
+equivalent, running from 2009 and disaggregated by structure type. It is
+published solely as an embedded Power BI dashboard with no CSV, API or HDX entry.
+A data request is drafted at `permissions/ocha-demolition-data.md`. B'Tselem also
+holds agricultural and olive-tree data (permission pending).
+
+## 10. Al-Haq coverage
 
 Al-Haq publishes narrative HTML, not a geolocated database. Of 71 crawled
 records: 47 are locatable field stories and 24 are territory-wide periodic

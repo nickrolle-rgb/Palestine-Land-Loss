@@ -20,6 +20,7 @@ from datetime import date
 from .adapters import alhaq as alhaq_adapter
 from .adapters import historical
 from .adapters import ocha
+from .adapters import ocha_violence
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of, count_vertices, simplify_geometry
 from .schema import (
@@ -159,6 +160,23 @@ def build_base() -> dict:
     write_layer(
         "village_boundaries.geojson",
         _simplify_features([feature(f["geometry"], f["properties"]) for f in villages]),
+    )
+
+    print("[base] resource destruction (Masafer Yatta)")
+    from .adapters.alhaq import Gazetteer
+    gaz = Gazetteer(localities)
+    resource_feats, resource_stats = ocha_violence.load_resource_destruction(gaz)
+    print(f"       {resource_stats['total_records']} records -> "
+          f"{resource_stats['localities_plotted']} localities plotted, "
+          f"{resource_stats['localities_withheld']} withheld "
+          f"({resource_stats['records_withheld']} records)")
+    write_layer(
+        "resource_destruction.geojson",
+        [feature(f["geometry"], f["properties"]) for f in resource_feats],
+        source="OCHA field-based monitoring, Masafer Yatta",
+        coverage="Masafer Yatta (South Hebron Hills) only, 2025 only",
+        **{k: v for k, v in resource_stats.items() if k != "withheld_detail"},
+        withheld_detail=resource_stats["withheld_detail"],
     )
 
     # --- historical: the "what was there before" side of land loss ---

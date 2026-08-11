@@ -162,6 +162,25 @@ class Gazetteer:
                 out.append(part.strip())
         return out
 
+    def match_exact(self, name: str) -> list[Locality]:
+        """Match a whole structured field, not a phrase inside prose.
+
+        `match()` searches for locality names *within* free text, so it excludes
+        short names — 'Tuba' would otherwise fire inside unrelated sentences.
+        When the input is a dedicated village column that risk does not exist,
+        so exact normalised equality is both safe and better recall.
+        """
+        target = normalise(name)
+        if not target:
+            return []
+        seen: dict[str, Locality] = {}
+        for loc in self.localities:
+            for variant in self._variants(loc):
+                if normalise(variant) == target:
+                    seen[loc.locality_id] = loc
+                    break
+        return list(seen.values())
+
     def match(self, text: str) -> tuple[list[Locality], str | None]:
         """Return (candidates, matched_surface_form).
 
