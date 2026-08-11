@@ -27,8 +27,9 @@ export const STYLE_TIMEOUT_MS = 6000;
 // Ordered oldest first: the PEF sheets predate essentially all Zionist land
 // purchase, so they are the closest thing to a pre-transfer baseline that
 // exists as surveyed cartography.
+// Wording suggested by Palestine Open Maps when they granted permission.
 const POM_ATTRIBUTION =
-  '<a href="https://palopenmaps.org">Palestine Open Maps</a>';
+  'Survey of Palestine / <a href="https://palopenmaps.org">Palestine Open Maps</a>';
 
 export const HISTORICAL_LAYERS = [
   {
@@ -36,7 +37,7 @@ export const HISTORICAL_LAYERS = [
     label: "PEF Survey of Western Palestine",
     detail: "Surveyed 1871–77 · pre-Mandate baseline",
     tiles: "https://palopenmaps.org/tiles/pal63k-1880/{z}/{x}/{y}@2x.jpg",
-    attribution: `${POM_ATTRIBUTION} — PEF Survey of Western Palestine, surveyed 1871–77`,
+    attribution: `${POM_ATTRIBUTION} — PEF Survey of Western Palestine, 1871–77`,
     maxzoom: 15,
   },
   {
@@ -99,8 +100,11 @@ export const STAGE_COLOURS = {
 
 export const OUTPOST_COLOUR = "#a855f7";
 
+// Four measures of "how much land", deliberately distinct. Built-up is ~1% of
+// the West Bank and municipal ~9% — a 9x spread that a single colour would hide.
 export const EXTENT_STYLE = {
   built_up: { colour: "#dc2626", label: "Built-up footprint" },
+  settlement_boundary: { colour: "#fb923c", label: "Settlement boundary" },
   municipal: { colour: "#f59e0b", label: "Municipal jurisdiction" },
   regional_council: { colour: "#a16207", label: "Regional council jurisdiction" },
 };

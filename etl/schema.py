@@ -122,26 +122,38 @@ MECHANISM_NOTES = {
 
 
 class ExtentType(str, Enum):
-    """The three ways to draw "how much land is taken". All three ship."""
+    """The ways to draw "how much land is taken". All of them ship, separately.
+
+    B'Tselem's data added a fourth measure that sits between built-up and
+    municipal. Rather than cram it into an existing definition — the exact
+    conflation this enum exists to prevent — it gets its own entry and its own
+    stated definition.
+    """
 
     BUILT_UP = "built_up"                  # actual buildings and roads
-    MUNICIPAL = "municipal"                # declared settlement boundary
+    SETTLEMENT_BOUNDARY = "settlement_boundary"  # the settlement's own outline
+    MUNICIPAL = "municipal"                # local authority jurisdiction
     REGIONAL_COUNCIL = "regional_council"  # regional council jurisdiction
 
 
 EXTENT_DEFINITIONS = {
     ExtentType.BUILT_UP: (
         "The physically developed area — buildings, roads and immediate curtilage. "
-        "The smallest of the three measures."
+        "The smallest measure, and about 1% of the West Bank."
+    ),
+    ExtentType.SETTLEMENT_BOUNDARY: (
+        "The settlement's own mapped outline, as recorded by B'Tselem. Around "
+        "2.8 times the built-up area, and about 3% of the West Bank. Distinct from "
+        "the municipal boundary below; where the two differ, both are shown."
     ),
     ExtentType.MUNICIPAL: (
-        "The settlement's declared municipal boundary, within which it may plan and "
-        "build. Typically several times larger than the built-up area."
+        "The local authority boundary within which a settlement may plan and build. "
+        "Around 7 times the built-up area, and about 9% of the West Bank."
     ),
     ExtentType.REGIONAL_COUNCIL: (
         "The jurisdiction of the regional council the settlement belongs to. Covers "
         "a large share of Area C, including land not built on and land cultivated by "
-        "Palestinians."
+        "Palestinians. No source yet."
     ),
 }
 

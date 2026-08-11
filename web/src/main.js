@@ -33,10 +33,12 @@ const EMPTY = { type: "FeatureCollection", features: [] };
 
 async function loadAll() {
   state.meta = await loadJSON("meta.json");
+  // Extent layers are derived from EXTENT_STYLE rather than listed again, so
+  // adding a measure in one place cannot leave the loader behind.
   const names = {
-    built_up: "settlements_built_up.geojson",
-    municipal: "settlements_municipal.geojson",
-    regional_council: "settlements_regional_council.geojson",
+    ...Object.fromEntries(
+      Object.keys(EXTENT_STYLE).map((k) => [k, `settlements_${k}.geojson`])
+    ),
     localities: "localities.geojson",
     oslo: "oslo_areas.geojson",
     barrier: "barrier.geojson",
@@ -72,7 +74,7 @@ function stageAt(props, year) {
 
 /** Re-derive per-feature time properties and push to the map source. */
 function applyTime(map) {
-  for (const key of ["built_up", "municipal", "regional_council"]) {
+  for (const key of Object.keys(EXTENT_STYLE)) {
     const fc = state.data[key];
     const out = {
       type: "FeatureCollection",
@@ -124,7 +126,7 @@ function applyTime(map) {
 /** Earliest year for which any stage evidence exists across all extents. */
 function computeEarliestYear() {
   let earliest = null;
-  for (const key of ["built_up", "municipal", "regional_council"]) {
+  for (const key of Object.keys(EXTENT_STYLE)) {
     for (const f of state.data[key].features) {
       for (const ev of f.properties.stage_history || []) {
         if (!ev.valid_from) continue;

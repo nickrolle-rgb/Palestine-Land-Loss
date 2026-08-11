@@ -24,7 +24,22 @@ explicitly rather than appearing broken.
 as reports and tables rather than clean GeoJSON, so this is extraction work, not
 a download. Permission draft in `permissions/peace-now.md`.
 
-## 2. Municipal and regional council jurisdiction have no source
+## 2. Jurisdiction extents — municipal now sourced, regional council still not
+
+**Status:** largely closed 2026-08-11.
+
+B'Tselem granted permission and supplied the data. The map now ships four
+measures: built-up (1.0% of the West Bank), settlement boundary (3.2%),
+municipal jurisdiction (9.2%) and regional council (still empty). The
+order-of-magnitude spread the project was designed around is now demonstrated
+from a single consistent source rather than asserted.
+
+**Still missing: regional council jurisdiction.** That layer continues to ship
+visibly empty and labelled "no data yet". Regional councils cover a far larger
+share of Area C than any measure currently shown, so its absence understates the
+total. Worth asking B'Tselem whether they hold it.
+
+### Original note
 
 **Status:** blocking the project's defining honesty decision.
 
@@ -40,16 +55,23 @@ rather than being hidden, so the absence is visible.
 **To close:** B'Tselem is the primary candidate. Permission draft in
 `permissions/btselem.md`.
 
-## 3. Outposts are not separately inventoried
+## 3. Outposts — inventory now sourced, authorisation dates still missing
 
-Outposts need their own track — built without Israeli government authorisation,
-illegal under Israeli domestic law as well as international law, and frequently
-authorised retroactively, jumping to stage 7 without passing through 2–4. The
-schema supports this (`EntityType.OUTPOST`, `retroactive_authorisation_date`)
-and the client styles it, but the open data does not distinguish outposts from
-settlements.
+**Status:** largely closed 2026-08-11.
 
-**To close:** Peace Now and Kerem Navot both track outposts.
+B'Tselem's boundary file types every feature, giving **127 outposts** covering
+24.9 km², alongside 156 settlements and 18 industrial zones. The parallel track
+the schema has modelled since the start finally has data in it.
+
+**Still missing: `retroactive_authorisation_date`.** The field exists and is
+rendered, but nothing populates it. Retroactive authorisation is the mechanism
+that makes outposts distinctive — built without Israeli government
+authorisation, illegal under Israeli domestic law as well as international law,
+then legalised after the fact. Without dates, the map can show that a place is
+an outpost but not when it was authorised.
+
+**To close:** Peace Now tracks authorisation decisions; Kerem Navot covers the
+land-use side.
 
 ## 4. Unnamed settlement polygons
 

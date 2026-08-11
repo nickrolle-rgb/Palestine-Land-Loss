@@ -16,7 +16,8 @@ so each carries its own styling, evidence and legal note:
 
 | Mechanism | Status | In this build |
 |---|---|---|
-| **Post-1967 settlement** | Unlawful under international law as a sourced finding — UNSC 2334 (2016), ICJ advisory opinion 19 July 2024 | 160 settlements, built-up extent |
+| **Post-1967 settlement** | Unlawful under international law as a sourced finding — UNSC 2334 (2016), ICJ advisory opinion 19 July 2024 | 160 built-up, 156 boundaries, 420 municipal areas |
+| **Outposts** | Built without Israeli government authorisation; illegal under Israeli domestic law too, and often retroactively legalised | 127 outposts, 24.9 km² |
 | **1948 depopulation** | Documented historical event; property vested in the state under the Absentees' Property Law 1950 | 467 localities depopulated 1947–50 |
 | Mandate-era land transfer | Modelled, not populated | — |
 | Closed military areas | Modelled, not populated | — |
@@ -67,10 +68,18 @@ result to refresh the deployed map.
 
 ## What it does
 
-- **Three ways to measure land taken.** Built-up footprint, municipal
-  jurisdiction and regional council jurisdiction differ by an order of
-  magnitude. All three are separate toggles with their definitions in the legend.
-  Two are currently empty, and say so.
+- **Four ways to measure land taken**, and the spread is the point:
+
+  | Measure | Area | % of West Bank |
+  |---|---|---|
+  | Built-up footprint | 56 km² | 1.0% |
+  | Settlement boundary | 179 km² | 3.2% |
+  | Municipal jurisdiction | 520 km² | 9.2% |
+  | Regional council | — | no data yet |
+
+  A 9× spread between built-up and municipal. Each is a separate toggle with its
+  definition in the legend; the unsourced one ships visibly empty rather than
+  hidden.
 - **The real seven-stage planning pipeline**, not a simplified four. Outposts run
   on a parallel track because they are frequently authorised retroactively and
   skip stages 2–4.

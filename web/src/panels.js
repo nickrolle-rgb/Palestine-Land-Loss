@@ -265,6 +265,7 @@ export function renderAbout(meta, data) {
   const stats = meta.stats || {};
   const inc = data.incidents?.metadata || {};
   const sources = meta.sources || [];
+  const attribution = meta.attribution || {};
 
   const sourceRows = sources
     .map(
@@ -394,6 +395,33 @@ export function renderAbout(meta, data) {
       could not be resolved to exactly one locality, or because the record is a
       territory-wide periodic report. Nothing is plotted on a guess. Al-Haq's text
       is not reproduced — every record links back to them.
+    </p>
+
+    <h2>Attribution</h2>
+    <p>
+      <strong>Palestine Open Maps.</strong> Historical map tiles are
+      "${esc(attribution.pom_tile_attribution || "Survey of Palestine / Palestine Open Maps")}".
+      The locality database is used and redistributed with their permission.
+      ${esc(attribution.pom_accuracy_note || "")}
+    </p>
+    ${(attribution.pom_underlying_sources || []).length ? `
+      <p>Palestine Open Maps ask that the sources underlying that database be
+      acknowledged, and they are:</p>
+      <ul>${attribution.pom_underlying_sources
+        .map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
+    <p>
+      <strong>B'Tselem.</strong> ${esc(attribution.btselem_note || "")}
+      Settlement boundaries, the outpost inventory and municipal boundaries all
+      come from data supplied by B'Tselem. This project is non-commercial and
+      receives no remuneration, as their licence requires.
+    </p>
+    <p>
+      <strong>UN OCHA oPt.</strong> Base geography, the Oslo classification,
+      Palestinian communities, village boundaries, the Barrier alignment, firing
+      zones and the Masafer Yatta monitoring data.
+      <strong>Peace Now</strong> — built-up settlement footprints, via OCHA on HDX.
+      <strong>Al-Haq</strong> — documented incidents, linked rather than reproduced.
+      <strong>Wikidata</strong> (CC0) — settlement identifications.
     </p>
 
     <h2>Sources and licensing</h2>

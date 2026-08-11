@@ -34,6 +34,43 @@ override source rather than from OCHA.
 
 ## Changes
 
+**2026-08-11 — B'Tselem data ingested; four source quirks handled.**
+B'Tselem supplied four GeoJSON files under their licence for non-commercial use.
+They fill the municipal jurisdiction layer and supply the outpost inventory.
+
+Measured against each other they demonstrate, rather than assert, the premise
+the project is built on:
+
+| Measure | Area | % of West Bank | vs built-up |
+|---|---|---|---|
+| Built-up | 56 km² | 1.0% | — |
+| Settlement boundary | 179 km² | 3.2% | 2.8× |
+| Municipal jurisdiction | 520 km² | 9.2% | 7.0× |
+
+Quirks handled at ingest, not propagated:
+
+1. **The municipal file has no usable join key.** `GIS_ID` is 0 on all 420
+   features and the Hebrew name column arrives mangled to underscores
+   (`____ ____`), with 1 of 420 English names populated. Names are recovered by
+   containment: a municipal polygon containing exactly one named settlement takes
+   that name. 88 of 420 are named this way; 332 stay unnamed, of which 58 contain
+   more than one settlement and are therefore ambiguous. None are guessed.
+2. **`DATE_` contains impossible values** — the range runs from `1000-01-01` to
+   `2094-11-17`. Validated against 1967-to-today; **29 values rejected**, 376
+   retained.
+3. **`Type` contains source typos** — `Ouptost` for `Outpost`, and one
+   untranslated Hebrew value `התנחלות`. Mapped explicitly rather than
+   normalised by guesswork.
+4. **A `GeometryCollection` feature** in the boundary files, which the extent
+   layers skip rather than mis-render.
+
+**2026-08-11 — a fourth extent definition added.** B'Tselem's settlement outline
+sits between built-up and municipal at 2.8× built-up. Rather than fold it into an
+existing definition — the exact conflation the extent model exists to prevent —
+it ships as `settlement_boundary` with its own stated definition. Which B'Tselem
+file corresponds to which of their own definitions is inference from magnitude,
+and confirmation has been sought.
+
 **2026-08-10 — 13 unnamed settlement polygons identified from Wikidata.** East
 Jerusalem went from 2 of 20 settlements named to 14 of 20.
 

@@ -85,26 +85,51 @@ SOURCES: dict[str, Source] = {
     ),
     "btselem": Source(
         source_id="btselem",
-        name="B'Tselem settlement and land-control data",
-        publisher="B'Tselem",
-        licence="UNKNOWN — permission not yet sought",
-        url="https://www.btselem.org/map",
-        enabled=False,
-        notes="Primary candidate source for municipal / regional council jurisdiction extents.",
+        name="B'Tselem settlement, boundary and municipal data",
+        publisher="B'Tselem — The Israeli Information Center for Human Rights in the Occupied Territories",
+        licence=(
+            "B'Tselem public licence for non-commercial use — "
+            "https://www.btselem.org/license"
+        ),
+        url="https://www.btselem.org",
+        enabled=True,
+        attribution=(
+            "Data from the B'Tselem website, supplied by B'Tselem and used under "
+            "its licence for non-commercial use"
+        ),
+        currency_note="Supplied 2026-08-11; includes a 2024-vintage boundary file.",
+        notes=(
+            "Granted 2026-08-11 by Shirly Eran, with four GeoJSON files supplied "
+            "directly. See docs/permissions/RESPONSES.md.\n\n"
+            "Licence conditions carried by this project: non-commercial use only; "
+            "no distortion or use out of context; B'Tselem named prominently and "
+            "expressly; any third parties B'Tselem credits must be named too.\n\n"
+            "OPEN QUESTION: the licence covers 'fair usage' of individual materials "
+            "and excludes 'expansive use', which needs express written consent. The "
+            "files were supplied in direct answer to a request describing this exact "
+            "use, which reads as consent — confirmation has been sought to remove "
+            "any doubt."
+        ),
     ),
     "alhaq": Source(
         source_id="alhaq",
         name="Al-Haq monitoring and documentation",
         publisher="Al-Haq",
-        licence="UNKNOWN — permission not yet sought; ingest is link-out only",
+        licence=(
+            "All rights reserved by Al-Haq. No licence is relied on: this project "
+            "stores only bibliographic metadata and links out."
+        ),
         url="https://www.alhaq.org/monitoring-documentation",
         enabled=True,
         attribution="Al-Haq — Defending Human Rights in Palestine since 1979",
+        currency_note="Crawled from their published listings; alhaq.org states 'All Rights Reserved'.",
         notes=(
             "Not a structured/geolocated database — narrative HTML reports under "
             "numeric IDs. We store title, date, URL and a matched locality only, "
             "and link out to Al-Haq for the content itself. We do not republish "
-            "their report text."
+            "their report text, so no copyright licence is required for what is "
+            "stored. A courtesy notice was sent 2026-08-10 describing exactly this "
+            "and inviting them to object; no reply yet."
         ),
     ),
     "palestine_open_maps": Source(
@@ -121,18 +146,19 @@ SOURCES: dict[str, Source] = {
         source_id="pom_localities",
         name="Palestine Open Maps — locality database",
         publisher="Palestine Open Maps / Visualizing Palestine",
-        licence="UNDECLARED — the pom-data repository states no licence",
+        licence="Permission granted 2026-08-11 for use and redistribution in an openly licensed map",
         url="https://github.com/palopenmaps/pom-data",
         enabled=True,
-        attribution="Palestine Open Maps (palopenmaps.org)",
+        attribution="Palestine Open Maps",
         currency_note="Locality records span 1922–2016; repository last updated 2025.",
         notes=(
-            "2,543 localities with trilingual names, population for 1922/1931/1945 "
-            "split Palestinian/Jewish, depopulation dates, and cross-references to "
-            "Zochrot, Palestine Remembered, Abu Sitta and PalQuest. "
-            "NO LICENCE IS DECLARED on the repository. Consuming their raster tiles "
-            "with attribution is a separate question from redistributing this "
-            "database. Permission request drafted — see docs/permissions/."
+            "Granted 2026-08-11 by the Visualizing Palestine team. Conditions "
+            "carried by this project: credit Palestine Open Maps; acknowledge the "
+            "underlying sources where practical (see POM_UNDERLYING_SOURCES); and "
+            "state that the data is not guaranteed to be 100% accurate.\n\n"
+            "They confirmed OpenStreetMap is used only for their present-day vector "
+            "overlay and is NOT the source of the localities data, so no ODbL "
+            "share-alike obligation flows to this project from it."
         ),
     ),
     "wikidata": Source(
@@ -242,6 +268,30 @@ HDX_RESOURCES: list[HdxResource] = [
 ]
 
 
+# Palestine Open Maps asked that the sources underlying their locality database
+# be acknowledged where practical. Rendered in the About panel and shipped in
+# meta.json so the credit travels with the data rather than living only in prose.
+POM_UNDERLYING_SOURCES = [
+    "Palestine Remembered",
+    "Institute for Palestine Studies",
+    "Palestine Lands Society",
+    "Palestinian Central Bureau of Statistics",
+    "Israeli Central Bureau of Statistics",
+    "Zochrot",
+    "B'Tselem",
+]
+
+# Their requested accuracy note, carried verbatim in substance.
+POM_ACCURACY_NOTE = (
+    "Palestine Open Maps do not guarantee that all of this data is 100% accurate. "
+    "It is republished here with their permission, together with its underlying "
+    "sources."
+)
+
+# Attribution wording they suggested for the historical tiles.
+POM_TILE_ATTRIBUTION = "Survey of Palestine / Palestine Open Maps"
+
+
 def enabled_sources() -> dict[str, Source]:
     return {k: v for k, v in SOURCES.items() if v.enabled}
 
@@ -256,6 +306,16 @@ def resource(key: str) -> HdxResource:
 def manifest() -> dict[str, Any]:
     """Source manifest shipped to the client for the About page and legend."""
     return {
+        "attribution": {
+            "pom_underlying_sources": POM_UNDERLYING_SOURCES,
+            "pom_accuracy_note": POM_ACCURACY_NOTE,
+            "pom_tile_attribution": POM_TILE_ATTRIBUTION,
+            "btselem_note": (
+                "Settlement boundary and municipal boundary data from the B'Tselem "
+                "website, supplied by B'Tselem and used under its licence for "
+                "non-commercial use."
+            ),
+        },
         "sources": [
             {
                 "source_id": s.source_id,

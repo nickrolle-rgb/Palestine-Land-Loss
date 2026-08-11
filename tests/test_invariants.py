@@ -298,17 +298,59 @@ class SourceRegistryDiscipline(unittest.TestCase):
                     f"{source_id} is disabled in the registry but appears in output",
                 )
 
-    def test_unlicensed_sources_are_flagged(self):
-        """Sources without a settled licence must say so in the registry."""
+    def test_no_enabled_source_has_an_unresolved_licence(self):
+        """Anything shipping must have a licence position, not a question mark.
+
+        This replaced a weaker test that merely asserted the *unresolved* status
+        of two sources was recorded. Both Palestine Open Maps and B'Tselem have
+        since granted permission, so the useful invariant is now the stronger
+        one: nothing ships with an unknown licence.
+        """
         from etl.sources import SOURCES
 
-        for sid in ("pom_localities", "historical_basemaps"):
+        for sid, source in SOURCES.items():
+            if not source.enabled:
+                continue
             with self.subTest(source=sid):
-                licence = SOURCES[sid].licence.lower()
-                self.assertTrue(
-                    "undeclared" in licence or "gpl" in licence,
-                    f"{sid}'s unresolved licence status is no longer recorded",
-                )
+                licence = source.licence.lower()
+                self.assertNotIn("unknown", licence, f"{sid} ships with an unknown licence")
+                self.assertNotIn("undeclared", licence, f"{sid} ships with an undeclared licence")
+
+    def test_remaining_licence_risks_stay_recorded(self):
+        """historical-basemaps is GPL-3.0 and that is still unresolved."""
+        from etl.sources import SOURCES
+
+        self.assertIn("gpl", SOURCES["historical_basemaps"].licence.lower())
+
+
+class AttributionConditions(unittest.TestCase):
+    """Conditions attached to granted permissions must actually travel with the data."""
+
+    def test_pom_conditions_are_published(self):
+        attribution = load("meta.json").get("attribution", {})
+        self.assertTrue(
+            attribution.get("pom_accuracy_note"),
+            "Palestine Open Maps asked that the accuracy caveat be stated; it is missing",
+        )
+        underlying = attribution.get("pom_underlying_sources") or []
+        for required in (
+            "Palestine Remembered",
+            "Institute for Palestine Studies",
+            "Palestine Lands Society",
+            "Palestinian Central Bureau of Statistics",
+            "Israeli Central Bureau of Statistics",
+            "Zochrot",
+            "B'Tselem",
+        ):
+            with self.subTest(source=required):
+                self.assertIn(required, underlying)
+
+    def test_btselem_is_credited(self):
+        attribution = load("meta.json").get("attribution", {})
+        self.assertIn(
+            "B'Tselem", attribution.get("btselem_note", ""),
+            "B'Tselem's licence requires them to be named expressly",
+        )
 
 
 if __name__ == "__main__":

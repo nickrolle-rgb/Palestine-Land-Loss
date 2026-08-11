@@ -86,5 +86,12 @@ python -m http.server -d web 8000
 - **Swipe curtain must tolerate a zero-width container.** If the map has no
   width at init the curtain collapses and looks like a failed layer; positioning
   defers until a `ResizeObserver` reports real width.
-- **Two unresolved licences**: `pom-data` declares none, historical-basemaps is
-  GPL-3.0. Both flagged in `etl/sources.py`; resolve before publication.
+- **B'Tselem files are checked in, not fetched** — `data/source/btselem/`. They
+  arrived by email; there is no URL to re-fetch them from. Used under B'Tselem's
+  non-commercial licence, which requires them to be named expressly.
+- **Permission conditions are enforced by tests**, not goodwill. Palestine Open
+  Maps require an accuracy caveat and acknowledgement of seven underlying
+  sources; `tests/test_invariants.py::AttributionConditions` fails if either
+  stops being published.
+- **One unresolved licence remains**: historical-basemaps is GPL-3.0. Palestine
+  Open Maps and B'Tselem both granted permission on 2026-08-11.

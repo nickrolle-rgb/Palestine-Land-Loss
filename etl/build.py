@@ -18,6 +18,7 @@ from collections import Counter
 from datetime import date
 
 from .adapters import alhaq as alhaq_adapter
+from .adapters import btselem
 from .adapters import historical
 from .adapters import ocha
 from .adapters import ocha_violence
@@ -103,10 +104,30 @@ def build_base() -> dict:
     villages = ocha.load_village_boundaries()
     print(f"       {len(villages)} polygons")
 
+    print("[bts]  B'Tselem settlement boundaries and outposts")
+    bts_entities, bts_stats = btselem.load_boundaries()
+    print(f"       {bts_stats['total']} entities: "
+          + ", ".join(f"{v} {k}" for k, v in bts_stats["by_type"].items() if v))
+    if bts_stats["unknown_types"]:
+        print(f"       unmapped Type values: {bts_stats['unknown_types']}")
+
+    print("[bts]  B'Tselem municipal boundaries")
+    municipal, muni_stats = btselem.load_municipal(entities + bts_entities)
+    print(f"       {muni_stats['total']} polygons | {muni_stats['named']} named by "
+          f"containment, {muni_stats['unnamed']} unnamed "
+          f"({muni_stats['ambiguous']} ambiguous)")
+    if muni_stats["implausible_dates_rejected"]:
+        print(f"       rejected {muni_stats['implausible_dates_rejected']} implausible DATE_ values")
+
+    # B'Tselem entities join the settlement inventory, carrying the outpost track.
+    entities = entities + bts_entities
+
     # --- settlement extents, one FeatureCollection per extent definition ---
     extent_counts: dict[str, int] = {}
     for extent_type in ExtentType:
         feats = []
+        if extent_type is ExtentType.MUNICIPAL:
+            feats = [feature(m["geometry"], m["properties"]) for m in municipal]
         for e in entities:
             for ext in e.extents:
                 if ext.extent_type is not extent_type:
@@ -220,6 +241,8 @@ def build_base() -> dict:
         "historic_localities": len(hist),
         "depopulated_1948": len(depop),
         "mandate_boundary": bool(mandate),
+        "btselem_entities": bts_stats,
+        "municipal_stats": muni_stats,
         "bounds": bounds_of(all_feats),
     }
 
