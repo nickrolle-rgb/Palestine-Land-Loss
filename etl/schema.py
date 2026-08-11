@@ -324,6 +324,9 @@ class Locality:
     group_1945: str | None = None       # Palestinian / Jewish / Mixed
     group_now: str | None = None
     mechanism: LossMechanism | None = None
+    # Where the historical sources place this locality, when that differs from
+    # its present-day position. See merge.py.
+    historic_point: list[float] | None = None
     references: dict[str, str] = field(default_factory=dict)  # external cross-refs
     evidence: list[Evidence] = field(default_factory=list)
 
@@ -363,6 +366,7 @@ class Locality:
             "group_1945": self.group_1945,
             "group_now": self.group_now,
             "mechanism": self.mechanism.value if self.mechanism else None,
+            "historic_coordinates": self.historic_point,
             "references": self.references,
             "evidence": [e.to_dict() for e in self.evidence],
         }

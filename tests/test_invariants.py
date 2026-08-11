@@ -142,6 +142,44 @@ class LocalitiesAreReconciled(unittest.TestCase):
             with self.subTest(record=rec.get("withheld")):
                 self.assertTrue(rec.get("shares_coordinates_with"))
 
+    def test_no_locality_is_both_depopulated_and_present_day(self):
+        """A place cannot have been depopulated in 1948 and still be inhabited.
+
+        Widening the merge produced exactly this: Palestine Open Maps' Jerusalem
+        record, covering neighbourhoods depopulated in 1948, merged into OCHA's
+        present-day East Jerusalem community. Different places, and on this map
+        a consequential difference.
+        """
+        fc = load("localities.geojson")
+        for f in fc["features"]:
+            p = f["properties"]
+            if p.get("depopulated_1948") and not p["locality_id"].startswith("pom-"):
+                self.fail(
+                    f"'{p.get('name')}' is listed by OCHA as a present-day community "
+                    f"and marked depopulated in 1948"
+                )
+
+    def test_historical_positions_are_plausible(self):
+        """A historical position must be near its present-day one, not anywhere."""
+        import math
+
+        fc = load("localities.geojson")
+        for f in fc["features"]:
+            hist = f["properties"].get("historic_coordinates")
+            if not hist:
+                continue
+            lon, lat = f["geometry"]["coordinates"]
+            d = math.hypot(
+                (hist[0] - lon) * math.cos(math.radians(31.9)) * 111_320,
+                (hist[1] - lat) * 111_320,
+            )
+            with self.subTest(name=f["properties"].get("name")):
+                self.assertLess(
+                    d, 2600,
+                    "historical position is further from the present-day one than "
+                    "the merge radius allows — the two records are not one place",
+                )
+
     def test_merged_localities_cite_both_sources(self):
         """A merged record must keep both citations, not silently drop one."""
         fc = load("localities.geojson")

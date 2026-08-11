@@ -11,22 +11,31 @@ Drawn together they produced visible double dots — Kobar twice, Burham twice,
 Abu Shukheidim twice — and clicking landed on whichever layer happened to be on
 top, so the panel could name a different place from the one under the cursor.
 
-Two distinct problems, handled differently.
+Three distinct problems, handled differently.
 
-**Duplication.** 311 pairs share a normalised name and sit within 600 m. Those
-are the same place recorded twice and are merged into one locality carrying both
-sources' attributes and both citations. The radius is not arbitrary: same-name
-distances are sharply bimodal — half are within 165 m and three quarters within
-376 m, then nothing much until a cluster beyond 5 km which is genuinely
-different places sharing a name (Palestine has several localities called Zayta).
-600 m sits in the empty band between the two populations.
+**Duplication.** 472 pairs are merged into one locality carrying both sources'
+attributes and both citations. Candidates are found by proximity and then
+confirmed by name, not the other way round: keying on exact normalised names
+missed real pairs, because "Beituniya" and "Beitunya" never landed in the same
+bucket to have their distance compared at all.
 
-**Coordinate conflicts.** 40 POM records sit on *exactly* the coordinates of a
-differently-named OCHA record — al-Zaytouneh on Abu Shukheidim's position, for
-instance, while POM's own Abu Shukheidim is 200 m away. Both cannot be right,
-and a point we have positive reason to believe is misplaced is not plotted. They
-are withheld, counted and logged, in keeping with how every other unresolvable
-record on this map is treated.
+**Position.** The two sources place the same town differently — Palestine Open
+Maps marks the 1945 village, OCHA the present-day administrative centre. Usually
+the gap is small (median 149 m) but it reaches 1.2 km at Beituniya, enough that a
+dot drawn at the modern centre floats away from the village it names on a 1940s
+survey sheet. Merged localities therefore keep both coordinates, and the client
+uses the historical one whenever a historical sheet is showing.
+
+**Coordinate conflicts.** 16 records sit on *exactly* the coordinates of a
+differently-named locality — al-Zaytouneh on Abu Shukheidim's position, while
+POM's own Abu Shukheidim is 200 m away. Both cannot be right, and a point we have
+positive reason to believe is misplaced is not plotted. They are withheld,
+counted and logged.
+
+A locality depopulated in 1948 is never merged into one OCHA lists as inhabited
+today. That rule caught a real error: POM's Jerusalem record, covering
+neighbourhoods depopulated in 1948, was merging into OCHA's present-day East
+Jerusalem community.
 """
 
 from __future__ import annotations
@@ -44,9 +53,20 @@ from .schema import Locality, Names
 # for why this number and not another.
 MERGE_RADIUS_M = 600
 
-# Same name, but far enough apart to be genuinely uncertain. Not merged; counted
-# so the residual duplication is known rather than invisible.
-AMBIGUOUS_RADIUS_M = 1500
+# Beyond the confident radius but still one place. Same-name offsets cluster
+# tightly — median 149 m, 95th percentile 826 m — and the next population of
+# same-name pairs sits beyond 5 km, genuinely different villages. So a match out
+# to 2.5 km is safe, and it is where a town's 1945 core and its modern
+# administrative centre diverge: Beituniya's two records are 1,175 m apart.
+# These merge, and are listed so the wider matches stay reviewable.
+AMBIGUOUS_RADIUS_M = 2500
+
+# Grid cell for candidate lookup, in degrees (~3 km).
+_CELL = 0.03
+
+
+def _cell(point: tuple[float, float]) -> tuple[int, int]:
+    return (int(point[0] / _CELL), int(point[1] / _CELL))
 
 
 # Two records at literally identical coordinates are describing the same point.
@@ -163,6 +183,15 @@ def _merge_pair(current: Locality, historic: Locality) -> Locality:
         group_now=historic.group_now,
         mechanism=historic.mechanism,
         references={**historic.references, **current.references},
+        # The two sources place the same town differently: Palestine Open Maps
+        # marks the 1945 village, OCHA the present-day administrative centre.
+        # Both are kept so a locality can sit where it belongs on whichever
+        # basemap is showing, instead of floating away from the historical sheet.
+        historic_point=(
+            list(historic.geometry["coordinates"])
+            if historic.geometry["coordinates"] != current.geometry["coordinates"]
+            else None
+        ),
         evidence=current.evidence + historic.evidence,
     )
 
@@ -251,6 +280,14 @@ def merge_localities(
         by_point[_point(loc)] = loc
         by_name[normalise(loc.names.primary)].append(loc)
 
+    # Candidates are found by proximity first, then confirmed by name. Keying on
+    # exact normalised names missed real pairs: "Beituniya" and "Beitunya" are
+    # one town spelled two ways 1.2 km apart, and never landed in the same
+    # bucket to have their distance checked at all.
+    grid: dict[tuple[int, int], list[Locality]] = defaultdict(list)
+    for loc in current:
+        grid[_cell(_point(loc))].append(loc)
+
     merged_into: dict[str, Locality] = {}
     standalone: list[Locality] = []
     conflicts: list[dict[str, str]] = []
@@ -258,20 +295,39 @@ def merge_localities(
 
     for h in historic:
         hp = _point(h)
-        hn = normalise(h.names.primary)
+        cx, cy = _cell(hp)
+        nearby = [
+            c
+            for dx in (-1, 0, 1)
+            for dy in (-1, 0, 1)
+            for c in grid.get((cx + dx, cy + dy), ())
+        ]
+        candidates = [
+            (c, _metres(hp, _point(c)))
+            for c in nearby
+            if _same_place(h.names.primary, c.names.primary)
+            # A locality OCHA lists as inhabited today cannot also be one
+            # depopulated in 1948, and merging the two produces a record that
+            # asserts both. It caught a real error: POM's Jerusalem record, for
+            # the neighbourhoods depopulated in 1948, was merging into OCHA's
+            # present-day "East Jerusalem" community — different places, and on
+            # this map a consequential difference.
+            and not h.depopulated_1948
+        ]
 
-        candidates = by_name.get(hn) or []
         if candidates:
-            nearest = min(candidates, key=lambda c: _metres(hp, _point(c)))
-            distance = _metres(hp, _point(nearest))
+            nearest, distance = min(candidates, key=lambda pair: pair[1])
             if distance <= MERGE_RADIUS_M:
                 key = nearest.locality_id
                 merged_into[key] = _merge_pair(merged_into.get(key, nearest), h)
                 continue
             if distance <= AMBIGUOUS_RADIUS_M:
                 ambiguous.append(
-                    f"{h.names.primary} ({distance:,.0f} m from its namesake)"
+                    f"{h.names.primary} / {nearest.names.primary} ({distance:,.0f} m apart)"
                 )
+                key = nearest.locality_id
+                merged_into[key] = _merge_pair(merged_into.get(key, nearest), h)
+                continue
 
         standalone.append(h)
 

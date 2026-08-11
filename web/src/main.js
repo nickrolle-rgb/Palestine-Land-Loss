@@ -123,6 +123,42 @@ function applyTime(map) {
   }
 }
 
+/** Move localities to their historical position while a historical sheet shows.
+ *
+ * The two sources place a town differently: Palestine Open Maps marks the 1945
+ * village, OCHA the present-day administrative centre. Beituniya's differ by
+ * 1.2 km. Drawn at the modern position over a 1940s survey, the dot floats away
+ * from the village it names — which is what "our locations struggle to find
+ * their map location" looks like. So over a historical sheet we use the
+ * historical coordinate where the merge kept one.
+ */
+function applyLocalityPositions(map) {
+  const historical = state.historicalMode !== "off";
+  const fc = state.data.localities;
+  const out = {
+    type: "FeatureCollection",
+    features: fc.features.map((f) => {
+      const hist = f.properties.historic_coordinates;
+      if (!historical || !hist) return f;
+      return {
+        ...f,
+        geometry: { type: "Point", coordinates: hist },
+        properties: { ...f.properties, positioned_as: "historical" },
+      };
+    }),
+  };
+  map.getSource("localities")?.setData(out);
+
+  const note = $("#position-note");
+  if (note) {
+    const moved = fc.features.filter((f) => f.properties.historic_coordinates).length;
+    note.hidden = !historical || !moved;
+    note.textContent =
+      `${moved} localities are shown at the position the historical sources record, ` +
+      `which differs from their present-day centre.`;
+  }
+}
+
 /** Earliest year for which any stage evidence exists across all extents. */
 function computeEarliestYear() {
   let earliest = null;
@@ -583,6 +619,8 @@ function setHistoricalMode(map, mode) {
 
   const overlayOn = mode === "overlay";
   map.setLayoutProperty("historical-raster", "visibility", overlayOn ? "visible" : "none");
+
+  applyLocalityPositions(map);
 
   const swipeOn = mode === "swipe";
   $("#swipe").hidden = !swipeOn;

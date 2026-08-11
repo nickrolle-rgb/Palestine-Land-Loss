@@ -36,6 +36,48 @@ override source rather than from OCHA.
 
 ## Changes
 
+**2026-08-12 — localities carry a historical position as well as a present-day
+one.** Points sat away from the villages they name on the historical sheets.
+Palestine Open Maps records the 1945 village; OCHA records the present-day
+administrative centre. Usually the gap is small (median 149 m) but it reaches
+1,175 m at Beituniya. Merged localities now keep both coordinates, and the map
+uses the historical one whenever a historical sheet is showing — 354 localities
+move, and a note says so.
+
+Palestine Open Maps was checked for vector data digitised from the survey sheets
+that might align better. It does not exist: their `places.json` is 2,490 points
+with the same coordinates as the CSV already ingested, and their only other
+vector data is present-day OpenStreetMap tiles. Their `raw-data/poha/` directory
+is the Palestinian Oral History Archive — interviews keyed to villages, not
+geometry, and worth linking from depopulated localities later.
+
+Two matching faults surfaced while investigating:
+
+1. **Candidates were keyed on exact normalised names**, so `Beituniya` and
+   `Beitunya` never landed in the same bucket to have their distance compared.
+   Matching is now proximity-first, name-confirmed, which took merged pairs from
+   311 to 472.
+2. **Merging more widely created a contradiction.** Palestine Open Maps'
+   Jerusalem record — the neighbourhoods depopulated in 1948 — merged into
+   OCHA's present-day East Jerusalem community, producing one record asserting a
+   place was both depopulated and inhabited. A locality depopulated in 1948 is
+   now never merged into one OCHA lists as inhabited today. A test asserts it.
+
+**2026-08-12 — the basemap was naming every village a second time.** The
+reconciled data draws one dot per place, but CARTO labels the same villages from
+OpenStreetMap, so places appeared twice in two transliterations (`Abu Shukhaidem`
+beside `Abu Shukheidim`). Our labels carry the Arabic name alongside the
+transliteration as the naming policy requires, so the basemap's populated-place
+labels are hidden while the locality layer is on.
+
+**2026-08-12 — deployed data could lag deployed code by an hour.** `vercel.json`
+set `max-age=3600` on the data directory, so a browser held old GeoJSON while
+HTML and JavaScript updated immediately. The interface reported counts from data
+it was no longer using — "Depopulated in 1948: 0" against a file containing 467.
+Correct data looked like missing data, which on this map is a claim in itself.
+The browser now always revalidates; the CDN still caches until a deploy purges.
+
+
 **2026-08-11 — the two locality datasets reconciled into one.** OCHA's
 communities layer and Palestine Open Maps' locality database both record
 Palestinian localities. Drawn as separate map layers they produced visible
