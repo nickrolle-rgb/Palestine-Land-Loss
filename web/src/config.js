@@ -87,6 +87,26 @@ export const MECHANISM_STYLE = {
 
 export const MANDATE_COLOUR = "#fbbf24";
 
+// The basemap labels populated places from OpenStreetMap, so with our own
+// locality labels on, every village was named twice — "Abu Shukhaidem" from
+// CARTO beside "Abu Shukheidim" from OCHA, with different transliterations.
+// Ours carry the Arabic name alongside the transliteration as the naming policy
+// requires, so ours win and these are hidden while the locality layer is on.
+// Country, state and continent labels are deliberately not in this list.
+export const BASEMAP_PLACE_LABELS = [
+  "place_hamlet",
+  "place_suburbs",
+  "place_villages",
+  "place_town",
+  "place_city_r6",
+  "place_city_r5",
+  "place_city_dot_r7",
+  "place_city_dot_r4",
+  "place_city_dot_r2",
+  "place_city_dot_z7",
+  "place_capital_dot_z7",
+];
+
 // The seven-stage pipeline. Colour ramps from "paper" to "built".
 export const STAGE_COLOURS = {
   1: "#fde68a",

@@ -1,6 +1,7 @@
 import {
   BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
-  MANDATE_COLOUR, MECHANISM_STYLE, OSLO_COLOURS, OUTPOST_COLOUR, STAGE_COLOURS,
+  BASEMAP_PLACE_LABELS, MANDATE_COLOUR, MECHANISM_STYLE, OSLO_COLOURS,
+  OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
 import { renderAbout, renderDetail } from "./panels.js";
@@ -297,6 +298,15 @@ function addResourceLayers(map) {
       "circle-opacity": 0.6,
     },
   });
+}
+
+/** Hide the basemap's own place names while we are drawing our own. */
+function setBasemapPlaceLabels(map, visible) {
+  for (const id of BASEMAP_PLACE_LABELS) {
+    if (map.getLayer(id)) {
+      map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    }
+  }
 }
 
 function addContextLayers(map) {
@@ -726,6 +736,11 @@ function buildMechanismToggles(map) {
     row.querySelector("input").addEventListener("change", (e) => {
       const vis = e.target.checked ? "visible" : "none";
       r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
+      // Our locality labels replace the basemap's rather than sitting on top of
+      // them; showing both named every village twice, in two transliterations.
+      if (r.layers.includes("localities-label")) {
+        setBasemapPlaceLabels(map, !e.target.checked);
+      }
     });
     host.appendChild(row);
   }
