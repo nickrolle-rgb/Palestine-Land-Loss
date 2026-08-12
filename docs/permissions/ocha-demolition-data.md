@@ -38,6 +38,22 @@ If a full export isn't possible, even a periodic aggregate by locality and
 structure type would be far more useful than the current situation, where the
 data is visible but not usable.
 
+**A second request, if I may: the Gaza access-restricted lines**
+
+OCHA's maps show the restricted-access zone Israel calls the Yellow Line, and
+the broader Orange Line between military positions and the surrounding danger
+zones. OCHA's own reporting puts the restricted area at 64.9% of the Gaza Strip
+by June 2026, up from 53% earlier in the year.
+
+Those figures are exactly the kind of thing this map exists to show, and the
+lines appear in your published graphics — but I can find no shapefile or GeoJSON
+for either on HDX. Your *Gaza Strip Buffer Area* dataset is openly licensed and
+usable, but it was last updated in October 2023 and so predates all of this.
+
+If the Yellow and Orange lines could be published as geodata, or added to the
+existing buffer dataset, they would be among the most useful layers available
+for the Gaza Strip.
+
 **Why it matters for this map**
 
 I currently show destruction of resource access — water, farmland, livestock,
