@@ -197,45 +197,47 @@ would be a fabrication.
 **To close:** better recall needs either Arabic-language matching against the
 Arabic site, or manual curation. Neither should lower the bar for plotting.
 
-## 11. Gaza — almost entirely absent, and the key layers are not open data
+## 11. Gaza — four usable layers, and the current ones are pre-war
 
 `SCOPE.md` put Gaza out of scope. That is no longer the right call for a map
-called Palestinian Land Loss, so this records what exists.
+called Palestinian Land Loss.
 
-**Usable today, openly licensed:**
+**Correction, 2026-08-12.** An earlier version of this section said Gaza was
+"almost entirely absent" from open data. That was wrong — it came from searching
+HDX for damage and buffer keywords and missing OCHA's Gaza administrative set.
+All four below were downloaded and parsed with the existing GDAL-free stack:
 
-| Dataset | Publisher | Licence | Format | Note |
-|---|---|---|---|---|
-| Gaza Strip Buffer Area | OCHA oPt | CC BY | SHP | "Closed and access restricted areas". Last updated **2023-10-19**, so it predates the current war entirely. |
-| Jordan Valley Military Buffer Zone | OCHA oPt | Other | SHP | West Bank, not Gaza, but the same mechanism. |
+| Dataset | Licence | Parsed | Note |
+|---|---|---|---|
+| Gaza Strip Municipal Boundaries | CC BY | 33 features, **365 km²** | The Strip's canonical area — gives Gaza a *computed* denominator, the same self-check the Oslo polygons provide for the West Bank |
+| Gaza Strip Buffer Area | CC BY | 3 features, **83 km²** | "Closed and access restricted areas". **22.7% of the Gaza Strip** |
+| Gaza Strip Fishing Zone (2019) | CC BY | 1 feature, 964 km² | The maritime limit imposed by Israel — access restriction by sea |
+| Gaza Strip Neighbourhoods | CC BY | points | Locality detail |
 
-**Available, with two real obstacles — UNOSAT damage assessments.** An extensive
-series from 2023 to 2025: comprehensive building damage, cropland and
-agricultural damage with FAO, road networks, greenhouses, and analyses of the
-1 km strip along the perimeter. Two problems:
+**But every one of them predates the current war**: the buffer area was last
+updated 2023-10-19 and the rest 2019-07-18. They describe the Gaza of before
+October 2023, and any layer built from them must say so on its face — the
+failure mode here is a reader taking a 2019 fishing limit or a 2023 buffer for
+the situation today.
 
-1. **CC BY-SA** — share-alike, which would attach to this project's derived
-   database. The same class of decision as historical-basemaps' GPL-3.0, and it
-   needs making deliberately rather than by accident.
-2. **Mostly Geodatabase (`.gdb`)**, which the deliberately GDAL-free ETL cannot
-   read. Some older releases are shapefiles.
+**What the map currently holds for Gaza:** 152 localities and 10 depopulated
+1948 records, inherited from Palestine Open Maps' historic-Palestine coverage.
+**No area layer at all** — every polygon layer on the map (settlements,
+municipal, firing zones, Oslo, villages) has zero vertices inside the Strip.
 
-**Not available as data at all — the Yellow Line and Orange Line.** The Yellow
-Line is the demarcation from the ceasefire that took effect on 10 October 2025;
-the Orange Line is the wider restricted-access zone between Israeli military
-positions and the surrounding danger areas. OCHA's own reporting puts the
-restricted area at **64.9% of the Gaza Strip by June 2026, up from 53%** earlier
-that year.
-
-Both appear in OCHA's published maps. **Neither is on HDX in any geospatial
-format** — a search returns nothing. This is the same failure mode as the
-demolition database: the figures are published, the geometry is drawn, and none
-of it is machine-readable. Added to the OCHA data request in
+**Still not available as data — the Yellow Line and Orange Line.** The Yellow
+Line is the demarcation from the ceasefire of 10 October 2025; the Orange Line
+the wider restricted-access zone. OCHA reports the restricted area at **64.9% of
+the Gaza Strip by June 2026, up from 53%**. Both appear in OCHA's published maps;
+neither is on HDX in any geospatial format. Same failure as the demolition
+database — published, drawn, not machine-readable. Requested in
 `permissions/ocha-demolition-data.md`.
 
-Secondary analyses worth reading, though not data sources: Gisha's *Between the
-Yellow and Orange Lines*, and INSS's interactive Yellow Line map.
+**Available with obstacles — UNOSAT damage assessments.** Buildings, cropland
+with FAO, roads, greenhouses, the 1 km perimeter strip, 2023 to 2025. Two
+problems: **CC BY-SA**, whose share-alike would attach to this project's derived
+database, and mostly **Geodatabase**, which the GDAL-free ETL cannot read.
 
-**Before any Gaza layer ships**, the percentage readout needs a Gaza
-denominator, computed the same way the West Bank's 5,655 km² is — from geometry
-on the map, not quoted.
+The denominator question is answered: Gaza's municipal boundaries sum to 365 km²,
+so a Gaza percentage can be computed exactly as the West Bank's is, from geometry
+on the map rather than a quoted figure.
