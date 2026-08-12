@@ -25,7 +25,7 @@ from .adapters import ocha_violence
 from .adapters import poha as poha_adapter
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of, count_vertices, geometry_area_m2, simplify_geometry
-from .coverage import compute_coverage
+from .coverage import as_of, compute_coverage
 from .merge import apply_name_overrides, merge_localities
 from .search import build_index
 from .schema import (
@@ -341,6 +341,56 @@ def build_base() -> dict:
           f"{coverage['denominator_km2']:,.0f} km2 | all measures together "
           f"{all_four.get('km2', 0):,.0f} km2 ({all_four.get('pct')}%)")
 
+    # Marks for the time slider. Each is historically meaningful *and* changes
+    # the figure — a mark that moves nothing is decoration. Only two measures
+    # carry dated evidence: municipal declarations (1981-2006) and firing-zone
+    # orders (1967-2007). Built-up footprints have only the date OCHA observed
+    # them, which is not when they were built, so they are excluded from the
+    # series rather than made to imply a construction history they cannot
+    # support.
+    epochs = [
+        (1948, "1948", "The Nakba"),
+        (1967, "1967", "Occupation begins"),
+        (1993, "1993", "Oslo Accords"),
+        (2000, "2000", "Second Intifada"),
+        (2007, "2007", "Last dated closure order"),
+        (date.today().year, "Today", "All evidence, including undated measures"),
+    ]
+    dated_layers = {
+        "municipal": json.loads((PROCESSED / "settlements_municipal.geojson").read_text(encoding="utf-8"))["features"],
+        "closed_military_area": json.loads((PROCESSED / "firing_zones.geojson").read_text(encoding="utf-8"))["features"],
+    }
+    oslo_feats = json.loads((PROCESSED / "oslo_areas.geojson").read_text(encoding="utf-8"))["features"]
+
+    print("[cover] coverage over time")
+    timeline = []
+    for year, label, note in epochs:
+        if label == "Today":
+            combos = coverage["combinations"]
+            key = "closed_military_area+municipal"
+            timeline.append({
+                "year": year, "label": label, "note": note,
+                "dated_only": False,
+                "km2": combos[key]["km2"], "pct": combos[key]["pct"],
+                "all_measures_km2": all_four.get("km2"),
+                "all_measures_pct": all_four.get("pct"),
+            })
+        else:
+            snap = compute_coverage(
+                [(k, as_of(v, year)) for k, v in dated_layers.items()], oslo_feats
+            )
+            combined = snap["combinations"].get(
+                "closed_military_area+municipal",
+                {"km2": 0.0, "pct": 0.0},
+            )
+            timeline.append({
+                "year": year, "label": label, "note": note,
+                "dated_only": True,
+                "km2": combined["km2"], "pct": combined["pct"],
+            })
+        t = timeline[-1]
+        print(f"        {t['label']:>6}  {t['km2']:>8,.0f} km2  {t['pct']:>5.1f}%   {note}")
+
     print("[search] name index")
     index = build_index(localities, entities)
     write_json(PROCESSED / "search_index.json", index)
@@ -406,6 +456,7 @@ def build_base() -> dict:
         "west_bank_km2": round(west_bank_km2, 1),
         "land_measures": land_measures,
         "coverage": coverage,
+        "timeline": timeline,
         "bounds": bounds_of(all_feats),
     }
 

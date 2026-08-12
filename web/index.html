@@ -91,9 +91,10 @@
 
 <div id="timeline">
   <label for="time-slider">As at</label>
-  <input type="range" id="time-slider" min="1945" max="2026" step="1" value="2026">
-  <output id="time-readout">2026</output>
+  <input type="range" id="time-slider" min="0" max="5" step="1" value="5">
+  <output id="time-readout">Today</output>
   <button id="time-reset" class="ghost small">Reset</button>
+  <div id="time-marks" class="time-marks"></div>
   <p id="time-gap" hidden></p>
 </div>
 

@@ -295,3 +295,9 @@ details.block > summary:hover h2, details.block > summary:focus-visible h2 { col
 }
 .lt-lead { display: block; font-size: 12.5px; margin-top: 2px; }
 .lt-note { display: block; font-size: 11px; color: var(--ink-dim); margin-top: 5px; }
+
+.time-marks {
+  flex-basis: 100%; display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--ink-dim); margin-top: 2px;
+  padding: 0 46px 0 62px; letter-spacing: .03em;
+}

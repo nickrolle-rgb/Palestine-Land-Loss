@@ -257,6 +257,46 @@ class CoverageIsAUnion(unittest.TestCase):
         )
 
 
+class TimelineIsHonest(unittest.TestCase):
+    """The slider must not imply a history the sources cannot support."""
+
+    def _timeline(self):
+        t = (load("meta.json").get("stats") or {}).get("timeline") or []
+        if not t:
+            raise unittest.SkipTest("timeline not computed")
+        return t
+
+    def test_coverage_never_decreases_over_time(self):
+        """Land taken does not un-take itself."""
+        previous = -1.0
+        for entry in self._timeline():
+            with self.subTest(year=entry["label"]):
+                self.assertGreaterEqual(
+                    entry["km2"], previous - 0.5,
+                    "cumulative coverage fell between marks",
+                )
+            previous = entry["km2"]
+
+    def test_historical_marks_declare_they_are_dated_only(self):
+        """Built-up has no construction history and must not be implied into one."""
+        for entry in self._timeline():
+            if entry["label"] != "Today":
+                with self.subTest(year=entry["label"]):
+                    self.assertTrue(
+                        entry.get("dated_only"),
+                        "a historical mark must state that it counts only measures "
+                        "carrying dates",
+                    )
+
+    def test_every_mark_changes_the_figure(self):
+        """A mark that moves nothing is decoration on an evidence map."""
+        values = [e["km2"] for e in self._timeline()]
+        self.assertEqual(
+            len(values), len(set(values)),
+            "two marks report the same area — one of them earns nothing",
+        )
+
+
 class NoInventedNames(unittest.TestCase):
     """Rule: never guess a settlement's identity from size and position."""
 

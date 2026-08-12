@@ -127,6 +127,32 @@ class Grid:
         return out
 
 
+def feature_date(feature: dict[str, Any]) -> str | None:
+    """The date a feature's evidence establishes, wherever the source put it."""
+    props = feature.get("properties") or {}
+    for key in ("signed_date", "declared_date", "depopulated_date"):
+        if props.get(key):
+            return props[key][:10]
+    dates = [
+        s["valid_from"][:10]
+        for s in (props.get("stage_history") or [])
+        if s.get("valid_from")
+    ]
+    return min(dates) if dates else None
+
+
+def as_of(features: list[dict[str, Any]], year: int | None) -> list[dict[str, Any]]:
+    """Features whose evidence dates on or before the end of `year`."""
+    if year is None:
+        return features
+    out = []
+    for f in features:
+        d = feature_date(f)
+        if d and int(d[:4]) <= year:
+            out.append(f)
+    return out
+
+
 def compute_coverage(
     layers: list[tuple[str, list[dict[str, Any]]]],
     extent: list[dict[str, Any]],

@@ -111,7 +111,7 @@ function applyTime(map) {
   };
   map.getSource("incidents")?.setData(inc);
 
-  $("#time-readout").textContent = state.year;
+  $("#time-readout").textContent = state.epoch ? state.epoch.label : state.year;
   const shown = map.getSource("settlements-built_up")
     ? state.data.built_up.features.filter(
         (f) => stageAt(f.properties, state.year) !== null
@@ -708,6 +708,28 @@ function updateLandTotal() {
   const key = selected.slice().sort().join("+");
   const hit = (coverage.combinations || {})[key];
 
+  // Away from "Today" the figure is the one measured at that date, and it covers
+  // only the measures carrying dates. Saying so matters: built-up footprints
+  // have no construction history, so a total that silently folded them into a
+  // 1993 figure would be a fabrication.
+  const epoch = state.epoch;
+  if (epoch && epoch.dated_only) {
+    const dated = new Set(["municipal", "closed_military_area"]);
+    if (!selected.some((id) => dated.has(id))) {
+      el.innerHTML = `<span class="lt-lead">No dated evidence for this selection at ${epoch.label}.</span>
+        <span class="lt-note">Only municipal boundaries and closed military areas
+        carry dates. Built-up footprints have just the date they were observed,
+        which is not when they were built.</span>`;
+      return;
+    }
+    el.innerHTML =
+      `<span class="lt-figure">${epoch.pct}%</span>
+       <span class="lt-lead">of the West Bank by ${epoch.label} — ${epoch.km2.toLocaleString()} km²</span>
+       <span class="lt-note">${epoch.note}. Counts municipal jurisdiction and
+       closed military areas, the only measures with dated evidence.</span>`;
+    return;
+  }
+
   if (!selected.length) {
     el.innerHTML = `<span class="lt-lead">Nothing selected.</span>
       <span class="lt-note">Tick a measure to see how much of the West Bank it covers.</span>`;
@@ -1015,18 +1037,39 @@ function initInteraction(map) {
 
 function initTimeline(map) {
   const slider = $("#time-slider");
-  slider.min = TIME.min;
-  slider.max = TIME.max;
-  slider.value = TIME.max;
-  slider.addEventListener("input", (e) => {
-    state.year = Number(e.target.value);
-    applyTime(map);
-  });
-  $("#time-reset").addEventListener("click", () => {
-    state.year = TIME.max;
+  const epochs = (state.meta.stats || {}).timeline || [];
+
+  // A continuous year slider implied a precision the sources do not have, and
+  // most of its range moved nothing at all. These marks are historically
+  // meaningful *and* each one changes the figure — a mark that moves nothing is
+  // decoration.
+  if (!epochs.length) {
+    slider.min = TIME.min;
+    slider.max = TIME.max;
     slider.value = TIME.max;
+  } else {
+    slider.min = 0;
+    slider.max = epochs.length - 1;
+    slider.step = 1;
+    slider.value = epochs.length - 1;
+    const marks = $("#time-marks");
+    if (marks) marks.innerHTML = epochs.map((e) => `<span>${e.label}</span>`).join("");
+  }
+
+  const apply = () => {
+    const epoch = epochs[Number(slider.value)] || null;
+    state.epoch = epoch;
+    state.year = epoch ? epoch.year : Number(slider.value);
     applyTime(map);
+    updateLandTotal();
+  };
+
+  slider.addEventListener("input", apply);
+  $("#time-reset").addEventListener("click", () => {
+    slider.value = epochs.length ? epochs.length - 1 : TIME.max;
+    apply();
   });
+  apply();
 }
 
 // --------------------------------------------------------------------------
