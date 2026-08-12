@@ -18,10 +18,12 @@ look better is the worst possible trade.
 2. **Never plot a guessed location.** Al-Haq records that don't resolve to
    exactly one gazetteer locality are withheld and counted, not placed at a
    best-guess point. The withheld count is displayed.
-3. **Never conflate the three extent definitions.** Built-up footprint,
-   municipal jurisdiction and regional council jurisdiction differ by an order of
-   magnitude and ship as separate layers with definitions in the legend. Empty
-   layers render as "no data yet" rather than being hidden.
+3. **Never conflate the extent definitions.** Built-up footprint, settlement
+   boundary, municipal jurisdiction and regional council jurisdiction differ by
+   an order of magnitude and ship as separate layers with definitions stated.
+   Empty layers render as "no data yet" rather than being hidden. A fourth
+   definition was added rather than folding B'Tselem's settlement outline into
+   an existing one — that folding is exactly what this rule forbids.
 4. **Never enable a disabled source** in `etl/sources.py` without a recorded
    written permission in `docs/permissions/RESPONSES.md`.
 5. **Never reproduce Al-Haq's report text.** Title, date, URL and matched
@@ -94,4 +96,21 @@ python -m http.server -d web 8000
   sources; `tests/test_invariants.py::AttributionConditions` fails if either
   stops being published.
 - **One unresolved licence remains**: historical-basemaps is GPL-3.0. Palestine
-  Open Maps and B'Tselem both granted permission on 2026-08-11.
+  Open Maps and B'Tselem both granted permission on 2026-08-11; POHA is
+  CC BY-NC-ND, so metadata and links only.
+- **Land shares come from `etl/coverage.py`, not from adding areas.** The
+  measures overlap — built-up sits inside municipal — so a sum would be wrong.
+  Coverage rasterises to a 100 m grid and precomputes all combinations. Sample
+  cell *centres*: rounding spans outward inflated built-up by 35%.
+- **The West Bank denominator is computed, never quoted.** Summing the Oslo
+  polygons gives 5,655 km², which matches the canonical figure and is a standing
+  check on the geometry. The Mandate polygon is generalised (31,114 km² against
+  a published ~26,320) and must not be used as a denominator.
+- **`vercel.json` takes no comments.** A `"//"` key inside a header object fails
+  Vercel's schema and silently breaks every deploy; rationale goes in the repo.
+- **Anything with no `stage_history` must not be time-filtered out.** Municipal
+  boundaries carry none, and filtering them by stage emptied the layer while
+  leaving its checkbox working — correct data, no error, blank map.
+- **Search normalisation lives in Python** (`etl/search.py`); the client
+  normalises only the query. Arabic source names are vocalised and keyboards are
+  not, so tashkeel must be stripped or Arabic search matches nothing.

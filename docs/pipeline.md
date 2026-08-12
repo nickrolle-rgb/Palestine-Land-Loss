@@ -17,6 +17,13 @@ stages is what lets every pixel on the map cite a document.
 
 Only stage 6 currently has data, and only as a floor — see below.
 
+**The outpost inventory is no longer missing.** B'Tselem supplied it on
+2026-08-11: 127 outposts covering 24.9 km², alongside 156 settlements and 18
+industrial zones, each typed by them rather than inferred by us. What is still
+missing is the `retroactive_authorisation_date` — the field exists and renders,
+but nothing populates it, so the map can show that a place is an outpost and not
+when it was legalised. That remains with Peace Now.
+
 ## Outposts are a parallel track, not a stage
 
 Outposts are settlements built **without** Israeli government authorisation —

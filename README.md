@@ -19,8 +19,9 @@ so each carries its own styling, evidence and legal note:
 | **Post-1967 settlement** | Unlawful under international law as a sourced finding — UNSC 2334 (2016), ICJ advisory opinion 19 July 2024 | 160 built-up, 156 boundaries, 420 municipal areas |
 | **Outposts** | Built without Israeli government authorisation; illegal under Israeli domestic law too, and often retroactively legalised | 127 outposts, 24.9 km² |
 | **1948 depopulation** | Documented historical event; property vested in the state under the Absentees' Property Law 1950 | 467 localities depopulated 1947–50 |
+| **Closed military areas** | Israeli firing zones; land closed to Palestinian access, each with the date its closure order was signed | 58 zones, 1,024 km² — 18.1% of the West Bank |
+| **Destruction of resource access** | Water, farmland, livestock, homes and property, from OCHA field monitoring | 2,904 records, Masafer Yatta and 2025 only |
 | Mandate-era land transfer | Modelled, not populated | — |
-| Closed military areas | Modelled, not populated | — |
 | Barrier severance | Modelled, not populated | — |
 
 Keeping these distinct is not a softening. It is what stops a critic dismissing
@@ -68,18 +69,39 @@ result to refresh the deployed map.
 
 ## What it does
 
-- **Four ways to measure land taken**, and the spread is the point:
+- **Five measures of the same territory**, and the spread is the point:
 
   | Measure | Area | % of West Bank |
   |---|---|---|
-  | Built-up footprint | 56 km² | 1.0% |
-  | Settlement boundary | 179 km² | 3.2% |
-  | Municipal jurisdiction | 520 km² | 9.2% |
+  | Built-up footprint | 70.9 km² | 1.25% |
+  | Settlement boundary | 179.0 km² | 3.16% |
+  | Municipal jurisdiction | 520.0 km² | 9.20% |
+  | Closed military areas | 1,024.3 km² | 18.11% |
   | Regional council | — | no data yet |
 
-  A 9× spread between built-up and municipal. Each is a separate toggle with its
-  definition in the legend; the unsourced one ships visibly empty rather than
-  hidden.
+  A 7× spread between built-up and municipal, and 14× to the firing zones. Each
+  is a separate toggle with its definition stated; the unsourced one ships
+  visibly empty rather than hidden.
+
+  The denominator is computed from the Oslo polygons on the map, not quoted, and
+  comes to 5,655 km² — the canonical West Bank figure, which is a standing check
+  that the geometry and reprojection are sound.
+
+- **A running total that counts overlapping ground once.** Built-up land inside a
+  municipal boundary is the same ground, so selecting both reads 9.53%, not
+  10.43%. Firing zones largely fall outside both, so they genuinely do add:
+  everything together comes to 28.0% of the West Bank. Computed as a real union
+  by rasterising each measure onto a 100 m grid at build time, since the ETL has
+  no geometry library — see `etl/coverage.py`.
+
+- **Search in English, Arabic and Hebrew**, including variant transliterations,
+  so `Bayt Mirsim` finds `Beit Mirsim` and `القدس` finds Jerusalem. Arabic source
+  names are vocalised and keyboards are not, so tashkeel is stripped and alef
+  forms folded; Hebrew loses its niqqud.
+
+- **Oral history.** 726 recorded interviews across 133 villages from the
+  Palestinian Oral History Archive at AUB Libraries, joined on Palestine Open
+  Maps' own slug. Listed and linked, never reproduced — CC BY-NC-ND.
 - **The real seven-stage planning pipeline**, not a simplified four. Outposts run
   on a parallel track because they are frequently authorised retroactively and
   skip stages 2–4.
@@ -93,8 +115,10 @@ result to refresh the deployed map.
   figure rather than the total where the source records the split. Jerusalem's
   1945 total is 157,080; its Palestinian population was 60,080. Using the total
   would inflate the symbol 2.6×.
-- **Mandatory Palestine boundary** as the stated denominator — without a defined
-  whole, every "share of the land" figure is an assertion.
+- **Mandatory Palestine boundary** as context. It is *not* used as a denominator:
+  the source polygon is generalised and computes to 31,114 km² against a
+  published ~26,320, so percentages use the West Bank area measured from the
+  Oslo polygons instead.
 - **Every feature cites a dated document**, with the date retrieved.
 - **Al-Haq incident records** matched to localities by name, with unplaceable
   records withheld rather than guessed.
@@ -118,14 +142,33 @@ but not yet needed. See [docs/architecture.md](docs/architecture.md).
 | `etl/adapters/ocha.py` | OCHA/HDX base geography and settlements |
 | `etl/adapters/alhaq.py` | Al-Haq crawl, gazetteer matching, confidence scoring |
 | `etl/adapters/historical.py` | Palestine Open Maps localities, Mandate boundary |
+| `etl/adapters/btselem.py` | Settlement boundaries, municipal areas, outpost inventory |
+| `etl/adapters/poha.py` | Palestinian Oral History Archive index |
+| `etl/merge.py` | Reconciles the two locality sources into one place per dot |
+| `etl/coverage.py` | Overlap-aware land totals, rasterised to a 100 m grid |
+| `etl/search.py` | Cross-script name index |
+| `tests/test_invariants.py` | The rules the project's credibility rests on |
 | `web/` | Static MapLibre client |
 | `docs/` | Pipeline, naming policy, data gaps, corrections, permission drafts |
 
 ## Data and licensing
 
-Current posture is **OCHA/HDX-licensed data only**. Peace Now and B'Tselem
-adapters are scaffolded but disabled pending written permission; drafts are in
-[docs/permissions/](docs/permissions/).
+Every source carries its licence in `etl/sources.py`, and a test fails the build
+if anything ships with an unknown one.
+
+| Source | Position |
+|---|---|
+| OCHA oPt / HDX | CC BY and CC BY-IGO |
+| Peace Now, via OCHA on HDX | CC BY-IGO — their built-up layer, republished by OCHA |
+| **B'Tselem** | **Granted 2026-08-11**, non-commercial licence; four GeoJSON files supplied directly |
+| **Palestine Open Maps** | **Granted 2026-08-11** for tiles and the locality database, with conditions carried and asserted by tests |
+| Palestinian Oral History Archive | CC BY-NC-ND — metadata and links only |
+| Wikidata | CC0 |
+| Al-Haq | All rights reserved; no licence relied on, metadata and links only |
+| historical-basemaps | GPL-3.0 — **still unresolved**, used only for the Mandate boundary |
+| Peace Now direct | Not yet granted; adapter disabled |
+
+Correspondence and conditions are in [docs/permissions/](docs/permissions/).
 
 One wrinkle worth knowing: OCHA's "State of Palestine Settlements" layer on HDX
 *is* Peace Now's built-up settlement data, republished under CC BY-IGO. Using it

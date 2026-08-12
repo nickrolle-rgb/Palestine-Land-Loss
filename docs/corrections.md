@@ -158,9 +158,14 @@ They fill the municipal jurisdiction layer and supply the outpost inventory.
 Measured against each other they demonstrate, rather than assert, the premise
 the project is built on:
 
+These are B'Tselem's own three files measured against each other. Note the
+built-up figure below is **B'Tselem's** `settlements.geojson`; the layer this map
+ships as built-up is OCHA/Peace Now's, which measures 70.9 km² (1.25%). Both are
+built-up footprints from different surveys, and the map uses the OCHA one.
+
 | Measure | Area | % of West Bank | vs built-up |
 |---|---|---|---|
-| Built-up | 56 km² | 1.0% | — |
+| Built-up (B'Tselem) | 56 km² | 1.0% | — |
 | Settlement boundary | 179 km² | 3.2% | 2.8× |
 | Municipal jurisdiction | 520 km² | 9.2% | 7.0× |
 

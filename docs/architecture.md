@@ -27,20 +27,35 @@ than expected:
 
 | File | Size |
 |---|---|
-| `oslo_areas.geojson` | 3.0 MB |
-| `barrier.geojson` | 524 KB |
-| `settlements_built_up.geojson` | 513 KB |
-| `localities.geojson` | 496 KB |
-| `incidents.geojson` | 18 KB |
-| **Total** | **~4.6 MB** |
+| `localities.geojson` | 1.70 MB |
+| `village_boundaries.geojson` | 1.03 MB |
+| `settlements_municipal.geojson` | 1.02 MB |
+| `oslo_areas.geojson` | 594 KB |
+| `search_index.json` | 500 KB |
+| `settlements_settlement_boundary.geojson` | 354 KB |
+| `settlements_built_up.geojson` | 336 KB |
+| `oral_histories.json` | 217 KB |
+| others | ~330 KB |
+| **Total** | **~6.0 MB** |
 
-Eight Oslo polygons account for two thirds of that — they are extremely
-high-vertex boundaries. Two cheap wins before reaching for tiling: simplify the
-Oslo geometry at build time (it is a context layer, not a measurement layer),
-and gzip on the host, which typically takes GeoJSON to a fifth of its size.
+About 5.5 MB of that loads at startup: the search index is fetched on first
+search and the oral histories on first click, so neither costs a reader who
+never uses them.
 
-Move to PMTiles when the full West Bank build lands with all three extent layers
-populated. Nothing in the client assumes GeoJSON beyond the source declarations
+Simplification is already applied and is why these numbers are not far worse.
+Two tolerances, deliberately different:
+
+- **Context layers** (Oslo, Barrier, villages) simplify at ~10 m. Oslo alone
+  went from 142,671 vertices to 27,804 — 3.0 MB to 594 KB.
+- **Measurement layers** (the extents) simplify at ~5 m, below the accuracy of
+  the source boundaries and sub-pixel until zoom 18. Municipal halved.
+
+**Areas are never recomputed from simplified geometry.** They are measured from
+the source polygons before simplification runs and stored on the feature, so
+what is drawn can be cheaper than what is reported without the reported figure
+drifting.
+
+Move to PMTiles when the regional council layer lands and the payload grows again. Nothing in the client assumes GeoJSON beyond the source declarations
 in `main.js` — swapping means changing source types and adding `source-layer`
 names.
 
@@ -70,6 +85,7 @@ communities and the Barrier are already WGS84 geographic.
 | `web/src/config.js` | Colours, tile URLs, stage palette — visual language only |
 | `web/src/main.js` | Map setup, layers, time resolution, UI wiring |
 | `web/src/panels.js` | Detail and About panels |
+| `web/src/search.js` | Query normalisation and result rendering |
 
 **Time filtering happens in JavaScript, not in MapLibre filter expressions.**
 Stage history is an array of objects per feature, which expressions cannot index
@@ -89,3 +105,45 @@ Fully static. Any object store or GitHub Pages will serve it. The basemap
 currently points at CARTO's keyless style and the historical tiles at Palestine
 Open Maps — both third-party free tiers. Self-host the basemap style before any
 public launch; relying on someone else's free tier is not a hosting strategy.
+
+
+## Computing a union without a geometry library
+
+Selecting built-up and municipal jurisdiction together must not add 70.9 km² to
+520 km²: the built-up area sits inside the municipal boundary and it is the same
+ground. Closed military areas largely fall outside both, so they do add. A
+running total therefore needs a real union.
+
+There is no geometry library here, so `etl/coverage.py` rasterises each measure
+onto a 100 m grid and counts covered cells, precomputing all fifteen
+combinations at build time. The client looks the answer up; the browser never
+unions a polygon.
+
+Three details make it trustworthy rather than approximate:
+
+1. **Cells are sampled at their centres**, not by rounding spans outward. The
+   first attempt rounded outward and inflated built-up by 35% — up to two extra
+   cells per row is nothing for a large polygon and enormous for a small one.
+2. **Cell area is computed per row**, since a degree of longitude shortens going
+   north.
+3. **The result is checked against known figures.** Rasterised singles match the
+   polygon-computed areas within 0.3%, and the rasterised West Bank comes to
+   5,672 km² against 5,655 km² measured from polygons. Four tests assert the
+   union never exceeds the sum of its parts, never falls below its largest part,
+   and that the denominator agrees within 2%.
+
+Percentages use the rasterised denominator so numerator and denominator are
+measured the same way.
+
+## Reconciling overlapping sources
+
+`etl/merge.py` exists because OCHA and Palestine Open Maps both record
+Palestinian localities, and drawing both produced doubled dots and panels that
+named the wrong place. Candidates are found by proximity and confirmed by name —
+the reverse of the obvious order, because keying on exact names meant
+"Beituniya" and "Beitunya" never met to have their distance compared.
+
+Merged localities keep **both coordinates**: Palestine Open Maps marks the 1945
+village, OCHA the present-day centre, and at Beituniya those differ by 1,175 m.
+The client uses the historical position whenever a historical sheet is showing,
+so a dot does not float away from the village it names.
