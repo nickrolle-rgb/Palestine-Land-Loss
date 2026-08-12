@@ -257,6 +257,25 @@ function addHistoricalDataLayers(map) {
     },
   });
 
+  // Testimony is concentrated in Galilee and Haifa — depopulated 1948 villages
+  // inside Israel — so almost none fall in the West Bank. Without a way to see
+  // where they are, a reader looking at the West Bank would conclude there were
+  // none at all.
+  map.addLayer({
+    id: "localities-testimony",
+    type: "circle",
+    source: "localities",
+    filter: [">", ["coalesce", ["get", "oral_history_count"], 0], 0],
+    layout: { visibility: "none" },
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 4, 13, 11],
+      "circle-color": "#fbbf24",
+      "circle-stroke-color": "#451a03",
+      "circle-stroke-width": 1.5,
+      "circle-opacity": 0.85,
+    },
+  });
+
   map.addLayer({
     id: "localities-label",
     type: "symbol",
@@ -664,16 +683,29 @@ function toggleRow({ id, colour, label, definition, checked, disabled, note }) {
   return wrap;
 }
 
+function measureFor(id) {
+  return ((state.meta.stats || {}).land_measures || []).find((m) => m.id === id) || {};
+}
+
+/** "520 km² · 9.2% of the West Bank" — the figure that makes the point. */
+function figureFor(id) {
+  const m = measureFor(id);
+  if (!m.km2) return "";
+  const pct = m.pct_west_bank ? ` · ${m.pct_west_bank}% of the West Bank` : "";
+  return `<span class="measure-figure">${m.km2.toLocaleString()} km²${pct}</span>`;
+}
+
 function buildExtentToggles(map) {
   const host = $("#extent-toggles");
+
   for (const [key, style] of Object.entries(EXTENT_STYLE)) {
     const count = state.data[key].features.length;
-    const definition = state.meta.extent_definitions?.[key] || "";
+    const definition = (state.meta.extent_definitions || {})[key] || "";
     const row = toggleRow({
       id: key,
       colour: style.colour,
       label: style.label,
-      definition,
+      definition: definition + figureFor(key),
       checked: key === "built_up" && count > 0,
       disabled: count === 0,
       note: count === 0 ? "no data yet" : `${count}`,
@@ -685,31 +717,35 @@ function buildExtentToggles(map) {
     });
     host.appendChild(row);
   }
-}
 
-function buildContextToggles(map) {
-  const host = $("#context-toggles");
-  const rows = [
-    { id: "oslo", label: "Oslo areas (A / B / C, H1, H2)", layers: ["oslo-fill", "oslo-line"], colour: "#64748b" },
-    { id: "barrier", label: "Separation Barrier (Jan 2018)", layers: ["barrier-line"], colour: "#e879f9" },
-  ];
-  for (const r of rows) {
-    const empty = r.id === "barrier" && state.data.barrier.features.length === 0;
-    const row = toggleRow({
-      id: r.id, colour: r.colour, label: r.label,
-      checked: false, disabled: empty, note: empty ? "no data" : "",
-    });
-    row.querySelector("input").addEventListener("change", (e) => {
-      const vis = e.target.checked ? "visible" : "none";
-      r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
-    });
-    host.appendChild(row);
-  }
+  // Closed military areas belong with the measures rather than with context: a
+  // closure order removes access to land, and at 18% of the West Bank this is
+  // the largest single measure on the map.
+  const firingMeta = state.data.firing.metadata || {};
+  const firingRow = toggleRow({
+    id: "firing",
+    colour: "#f97316",
+    label: "Closed military areas",
+    definition:
+      "Israeli firing zones — land closed to Palestinian access. Each polygon " +
+      "carries the date its closure order was signed." +
+      figureFor("closed_military_area"),
+    checked: false,
+    note: `${firingMeta.count ?? state.data.firing.features.length}`,
+  });
+  firingRow.querySelector("input").addEventListener("change", (e) => {
+    const vis = e.target.checked ? "visible" : "none";
+    ["firing-fill", "firing-line"].forEach(
+      (l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis)
+    );
+  });
+  host.appendChild(firingRow);
 }
 
 function buildMechanismToggles(map) {
   const host = $("#mechanism-toggles");
   const meta = state.data.localities.metadata || {};
+  const resourceMeta = state.data.resource.metadata || {};
 
   const rows = [
     {
@@ -718,19 +754,18 @@ function buildMechanismToggles(map) {
       label: MECHANISM_STYLE.depopulation_1948.label,
       definition:
         "Localities depopulated during and after the 1948 war, sized by their " +
-        "1945 population. A documented historical event — a different legal " +
-        "category from the settlements.",
+        "1945 Palestinian population — not the locality total, which in mixed " +
+        "cities overstates displacement by more than twice.",
       layers: ["localities-depopulated"],
       note: `${meta.depopulated_1948 ?? 0}`,
     },
     {
-      id: "remaining",
+      id: "standing",
       colour: "#34d399",
       label: "Palestinian localities (present day)",
       definition:
         "Localities still standing, for contrast with what was lost. OCHA and " +
-        "Palestine Open Maps records are reconciled into one point per place, so " +
-        "a locality is never drawn twice.",
+        "Palestine Open Maps records are reconciled into one point per place.",
       layers: ["localities-standing", "localities-label"],
       note: "",
     },
@@ -740,41 +775,11 @@ function buildMechanismToggles(map) {
       label: "Destruction of resource access",
       definition:
         `Water, farmland, livestock, homes and property. ` +
-        `${(state.data.resource.metadata || {}).total_records ?? 0} verified OCHA ` +
-        `records. Sized by incidents per locality. ` +
+        `${resourceMeta.total_records ?? 0} verified OCHA records. ` +
         `<strong>Masafer Yatta only, 2025 only</strong> — absence elsewhere means ` +
         `not monitored, not that nothing happened.`,
       layers: ["resource-point"],
-      note: `${(state.data.resource.metadata || {}).localities_plotted ?? 0}`,
-    },
-    {
-      id: "firing",
-      colour: "#f97316",
-      label: "Closed military areas",
-      definition:
-        `${(state.data.firing.metadata || {}).count ?? 0} Israeli firing zones ` +
-        `covering ${(state.data.firing.metadata || {}).total_km2 ?? 0} km² — about ` +
-        `18% of the West Bank. Each carries the date its closure order was signed.`,
-      layers: ["firing-fill", "firing-line"],
-      note: `${(state.data.firing.metadata || {}).count ?? 0}`,
-    },
-    {
-      id: "villages",
-      colour: "#34d399",
-      label: "Palestinian village boundaries",
-      definition: "Areal extent of Palestinian villages, rather than a single point.",
-      layers: ["villages-fill", "villages-line"],
-      note: `${state.data.villages.features.length}`,
-    },
-    {
-      id: "mandate",
-      colour: MANDATE_COLOUR,
-      label: "Mandatory Palestine (1920)",
-      definition:
-        "The territorial denominator. Generalised boundary — indicative extent, " +
-        "not a survey-grade delimitation.",
-      layers: ["mandate-line"],
-      note: "",
+      note: `${resourceMeta.localities_plotted ?? 0}`,
     },
   ];
 
@@ -786,11 +791,38 @@ function buildMechanismToggles(map) {
     row.querySelector("input").addEventListener("change", (e) => {
       const vis = e.target.checked ? "visible" : "none";
       r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
-      // Our locality labels replace the basemap's rather than sitting on top of
-      // them; showing both named every village twice, in two transliterations.
       if (r.layers.includes("localities-label")) {
         setBasemapPlaceLabels(map, !e.target.checked);
       }
+    });
+    host.appendChild(row);
+  }
+}
+
+function buildContextToggles(map) {
+  const host = $("#context-toggles");
+  const rows = [
+    { id: "oslo", label: "Oslo areas (A / B / C, H1, H2)", layers: ["oslo-fill", "oslo-line"],
+      colour: "#64748b",
+      definition: "The classification the West Bank area on this map is computed from." },
+    { id: "barrier", label: "Separation Barrier (Jan 2018)", layers: ["barrier-line"],
+      colour: "#e879f9" },
+    { id: "villages", label: "Palestinian village boundaries",
+      layers: ["villages-fill", "villages-line"], colour: "#34d399",
+      definition: "Areal extent of Palestinian villages, rather than a single point." },
+    { id: "mandate", label: "Mandatory Palestine (1920)", layers: ["mandate-line"],
+      colour: MANDATE_COLOUR,
+      definition: "Generalised boundary — indicative extent, and deliberately not used for any percentage here." },
+  ];
+  for (const r of rows) {
+    const empty = r.id === "barrier" && state.data.barrier.features.length === 0;
+    const row = toggleRow({
+      id: r.id, colour: r.colour, label: r.label, definition: r.definition,
+      checked: false, disabled: empty, note: empty ? "no data" : "",
+    });
+    row.querySelector("input").addEventListener("change", (e) => {
+      const vis = e.target.checked ? "visible" : "none";
+      r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
     });
     host.appendChild(row);
   }
@@ -866,6 +898,27 @@ function buildIncidentToggles(map) {
   });
   host.appendChild(row);
 
+  const oralCount = Object.keys((state.oralHistories || {}).localities || {}).length;
+  if (oralCount) {
+    const oralRow = toggleRow({
+      id: "testimony",
+      colour: "#fbbf24",
+      label: "Localities with recorded testimony",
+      definition:
+        "Palestinian Oral History Archive interviews, held by AUB Libraries. " +
+        "Mostly depopulated villages in Galilee and Haifa, so few fall in the " +
+        "West Bank. Click a locality to list its interviews.",
+      checked: false,
+      note: `${oralCount}`,
+    });
+    oralRow.querySelector("input").addEventListener("change", (e) => {
+      map.setLayoutProperty(
+        "localities-testimony", "visibility", e.target.checked ? "visible" : "none"
+      );
+    });
+    host.appendChild(oralRow);
+  }
+
   // Surfacing the withheld count is the point: the gap is visible rather than
   // being papered over with plausible-looking pins.
   const withheld = meta.withheld ?? 0;
@@ -905,6 +958,7 @@ function initInteraction(map) {
     "localities-standing",
     "firing-fill",
     "resource-point",
+    "localities-testimony",
   ];
 
   map.on("click", (e) => {

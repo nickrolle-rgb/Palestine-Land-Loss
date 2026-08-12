@@ -24,8 +24,8 @@ from .adapters import ocha
 from .adapters import ocha_violence
 from .adapters import poha as poha_adapter
 from .fetch import PROCESSED, write_json
-from .geo import bounds_of, count_vertices, simplify_geometry
-from .merge import merge_localities
+from .geo import bounds_of, count_vertices, geometry_area_m2, simplify_geometry
+from .merge import apply_name_overrides, merge_localities
 from .search import build_index
 from .schema import (
     EXTENT_DEFINITIONS,
@@ -83,6 +83,34 @@ def _simplify_features(feats: list[dict], tol: float = CONTEXT_TOLERANCE) -> lis
     return out
 
 
+def _propagate_hebrew_names(targets, sources) -> int:
+    """Give OCHA's settlements the Hebrew names B'Tselem records for them."""
+    from .merge import _compare_key, _metres
+    from .search import _centroid
+
+    index = {}
+    for e in sources:
+        if e.names.hebrew and e.extents:
+            index.setdefault(_compare_key(e.names.primary), []).append(
+                (_centroid(e.extents[0].geometry), e.names.hebrew)
+            )
+
+    added = 0
+    for e in targets:
+        if e.names.hebrew or not e.extents:
+            continue
+        candidates = index.get(_compare_key(e.names.primary))
+        if not candidates:
+            continue
+        here = _centroid(e.extents[0].geometry)
+        for point, hebrew in candidates:
+            if _metres(tuple(here), tuple(point)) <= 2500:
+                e.names.hebrew = hebrew
+                added += 1
+                break
+    return added
+
+
 def build_base() -> dict:
     print("[base] Oslo areas")
     oslo = ocha.load_oslo_areas()
@@ -113,6 +141,13 @@ def build_base() -> dict:
     villages = ocha.load_village_boundaries()
     print(f"       {len(villages)} polygons")
 
+    # The denominator for every "share of the land" figure, computed from the
+    # Oslo polygons we already draw rather than asserted from a reference. It
+    # comes to 5,655 km2, which is the canonical West Bank area — a useful check
+    # that the geometry and the reprojection are sound.
+    west_bank_km2 = sum(geometry_area_m2(f["geometry"]) for f in oslo) / 1e6
+    print(f"[base] West Bank area computed from Oslo polygons: {west_bank_km2:,.0f} km2")
+
     print("[bts]  B'Tselem settlement boundaries and outposts")
     bts_entities, bts_stats = btselem.load_boundaries()
     print(f"       {bts_stats['total']} entities: "
@@ -128,11 +163,20 @@ def build_base() -> dict:
     if muni_stats["implausible_dates_rejected"]:
         print(f"       rejected {muni_stats['implausible_dates_rejected']} implausible DATE_ values")
 
+    # B'Tselem names its settlements in Hebrew; OCHA does not. The same place
+    # exists in both inventories, so the Hebrew name is carried across where the
+    # two agree on name and position — the settlement panel should show every
+    # name a place is known by, as the naming policy requires.
+    hebrew_added = _propagate_hebrew_names(entities, bts_entities)
+    if hebrew_added:
+        print(f"       carried {hebrew_added} Hebrew names across from B'Tselem")
+
     # B'Tselem entities join the settlement inventory, carrying the outpost track.
     entities = entities + bts_entities
 
     # --- settlement extents, one FeatureCollection per extent definition ---
     extent_counts: dict[str, int] = {}
+    land_measures: list[dict] = []
     for extent_type in ExtentType:
         feats = []
         if extent_type is ExtentType.MUNICIPAL:
@@ -148,6 +192,16 @@ def build_base() -> dict:
                 props["in_east_jerusalem"] = e.entity_type is EntityType.EJ_SETTLEMENT
                 feats.append(feature(ext.geometry, props))
         extent_counts[extent_type.value] = len(feats)
+        measured_km2 = sum(
+            (f["properties"].get("area_m2") or 0) for f in feats
+        ) / 1e6
+        land_measures.append({
+            "id": extent_type.value,
+            "label": EXTENT_DEFINITIONS[extent_type],
+            "km2": round(measured_km2, 1),
+            "pct_west_bank": round(measured_km2 / west_bank_km2 * 100, 2) if measured_km2 else None,
+            "count": len(feats),
+        })
         write_layer(
             f"settlements_{extent_type.value}.geojson",
             _simplify_features(feats, MEASUREMENT_TOLERANCE) if feats else feats,
@@ -172,6 +226,15 @@ def build_base() -> dict:
             "barrier.geojson",
             _simplify_features([feature(f["geometry"], f["properties"]) for f in barrier]),
         )
+
+    land_measures.append({
+        "id": "closed_military_area",
+        "label": "Israeli firing zones — land closed to Palestinian access. Each "
+                 "polygon carries the date its closure order was signed.",
+        "km2": round(firing_km2, 1),
+        "pct_west_bank": round(firing_km2 / west_bank_km2 * 100, 2),
+        "count": len(firing),
+    })
 
     print("[base] firing_zones.geojson")
     write_layer(
@@ -235,6 +298,9 @@ def build_base() -> dict:
     if merge_stats["same_name_but_too_far_to_merge"]:
         print(f"        {merge_stats['same_name_but_too_far_to_merge']} same-name pairs "
               f"too far apart to merge; left separate")
+    named = apply_name_overrides(localities)
+    if named:
+        print(f"        applied {named} curated name additions")
     print(f"        {len(depop)} depopulated 1947-50")
 
     write_layer(
@@ -314,6 +380,8 @@ def build_base() -> dict:
         "mandate_boundary": bool(mandate),
         "btselem_entities": bts_stats,
         "municipal_stats": muni_stats,
+        "west_bank_km2": round(west_bank_km2, 1),
+        "land_measures": land_measures,
         "bounds": bounds_of(all_feats),
     }
 

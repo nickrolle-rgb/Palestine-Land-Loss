@@ -40,14 +40,16 @@ Jerusalem community.
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from collections import defaultdict
+from pathlib import Path
 from difflib import SequenceMatcher
 from typing import Any
 
 from .adapters.alhaq import normalise
-from .schema import Locality, Names
+from .schema import Evidence, Locality, Names
 
 # Merge two same-named localities within this distance. See the module docstring
 # for why this number and not another.
@@ -270,6 +272,46 @@ def _drop_coordinate_conflicts(
                 )
 
     return keep, dropped, coincident
+
+
+NAME_OVERRIDES_PATH = Path(__file__).resolve().parent / "name_overrides.json"
+
+
+def apply_name_overrides(localities: list[Locality]) -> int:
+    """Add names the sources omit, each from a cited reference.
+
+    Palestine Open Maps records Jerusalem's Arabic name but no Hebrew one, so a
+    search for ירושלים returned nothing. Rather than type in a name from memory,
+    the value comes from a curated file that records where it was checked — the
+    same discipline as etl/identifications.json.
+    """
+    if not NAME_OVERRIDES_PATH.exists():
+        return 0
+    overrides = json.loads(NAME_OVERRIDES_PATH.read_text(encoding="utf-8"))
+    applied = 0
+    for loc in localities:
+        entry = overrides.get(loc.locality_id)
+        if not isinstance(entry, dict):
+            continue
+        changed = False
+        for field_name in ("arabic", "hebrew", "pre_1948"):
+            value = entry.get(field_name)
+            if value and not getattr(loc.names, field_name):
+                setattr(loc.names, field_name, value)
+                changed = True
+        if changed:
+            loc.evidence = loc.evidence + [
+                Evidence(
+                    source_id=entry.get("source", "wikidata"),
+                    title=f"{loc.names.primary} — name from {entry.get('wikidata', 'reference')}",
+                    url=entry.get("wikidata_url"),
+                    document_date=entry.get("verified"),
+                    retrieved=entry.get("verified"),
+                    note=entry.get("note"),
+                )
+            ]
+            applied += 1
+    return applied
 
 
 def merge_localities(

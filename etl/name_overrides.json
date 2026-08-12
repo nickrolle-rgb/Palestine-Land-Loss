@@ -1,0 +1,26 @@
+{
+  "_note": [
+    "Names the sources omit, added from a citable reference and never from",
+    "memory or inference. Keyed by locality_id. Each entry names where the",
+    "value came from so a reader can check it, exactly as etl/identifications.json",
+    "does for settlement polygons.",
+    "",
+    "Wikidata is CC0, so no attribution is owed; it is credited anyway."
+  ],
+  "402090": {
+    "hebrew": "ירושלים",
+    "source": "wikidata",
+    "wikidata": "Q1218",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1218",
+    "verified": "2026-08-12",
+    "note": "Palestine Open Maps records the Arabic name but no Hebrew one. Taken from the Wikidata Hebrew label for Jerusalem (Q1218), whose Arabic label القدس matches the value already held."
+  },
+  "pom-509": {
+    "hebrew": "ירושלים",
+    "source": "wikidata",
+    "wikidata": "Q1218",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1218",
+    "verified": "2026-08-12",
+    "note": "Palestine Open Maps records the Arabic name but no Hebrew one. Taken from the Wikidata Hebrew label for Jerusalem (Q1218), whose Arabic label القدس matches the value already held."
+  }
+}

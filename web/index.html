@@ -27,8 +27,8 @@
 </p>
 
 <aside id="panel" class="panel">
-  <section class="block">
-    <h2>Find a place</h2>
+  <details class="block" open>
+    <summary><h2>Find a place</h2></summary>
     <input id="search-input" type="search" autocomplete="off" spellcheck="false"
            placeholder="Search in English, Arabic or Hebrew">
     <p class="hint">
@@ -36,52 +36,60 @@
       Bayt finds Beit and Dayr finds Deir.
     </p>
     <div id="search-results"></div>
-  </section>
+  </details>
 
-  <section class="block">
-    <h2>Land measured as</h2>
-    <p class="hint">Four definitions, differing by an order of magnitude: built-up is about 1% of the West Bank, municipal jurisdiction about 9%. Pick deliberately.</p>
-    <div id="extent-toggles"></div>
-  </section>
-
-  <section class="block">
-    <h2>Mechanism of loss</h2>
+  <details class="block" open>
+    <summary><h2>How much land is taken</h2></summary>
     <p class="hint">
-      Different mechanisms, styled apart. Post-1967 settlement is unlawful under
+      Five measures of the same territory, differing by more than an order of
+      magnitude. Shares are of the West Bank, whose area is computed from the
+      Oslo polygons on this map rather than quoted.
+    </p>
+    <div id="extent-toggles"></div>
+    <p class="hint warn-inline">
+      These overlap — a built-up area sits inside its municipal boundary, which
+      may sit inside a firing zone. <strong>Do not add them together.</strong>
+    </p>
+  </details>
+
+  <details class="block" open>
+    <summary><h2>Mechanism of loss</h2></summary>
+    <p class="hint">
+      Styled apart on purpose. Post-1967 settlement is unlawful under
       international law as a sourced finding; the 1948 depopulation is a
       documented event of different legal character. Both are land loss.
     </p>
     <div id="mechanism-toggles"></div>
-  </section>
+  </details>
 
-  <section class="block">
-    <h2>Context layers</h2>
+  <details class="block">
+    <summary><h2>Context layers</h2></summary>
     <div id="context-toggles"></div>
-  </section>
+  </details>
 
-  <section class="block">
-    <h2>Historical underlay</h2>
+  <details class="block">
+    <summary><h2>Historical underlay</h2></summary>
     <div id="historical-toggles"></div>
     <p class="hint" id="position-note" hidden></p>
     <p class="hint" id="historical-note">
       Survey of Palestine 1:20,000, surveyed 1940&ndash;1945, via Palestine Open Maps.
     </p>
-  </section>
+  </details>
 
-  <section class="block">
-    <h2>Documented incidents</h2>
+  <details class="block">
+    <summary><h2>Documented record</h2></summary>
     <div id="incident-toggles"></div>
     <p class="hint" id="incident-coverage"></p>
-  </section>
+  </details>
 
-  <section class="block">
-    <h2>Settlement planning stage</h2>
+  <details class="block">
+    <summary><h2>Settlement planning stage</h2></summary>
     <ol id="stage-legend" class="stage-legend"></ol>
     <p class="hint">
       Outposts are a parallel track: built without Israeli authorisation and often
       retroactively legalised, so they skip stages 2&ndash;4 entirely.
     </p>
-  </section>
+  </details>
 </aside>
 
 <div id="timeline">

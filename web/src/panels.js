@@ -61,16 +61,25 @@ function stageHistoryBlock(history = [], meta) {
   return `<h4>Stage history</h4><ul class="evidence">${rows}</ul>`;
 }
 
+// Names sit directly under the title, not buried below the evidence. A place's
+// Arabic and Hebrew names are not an appendix to its identity — the naming
+// policy exists precisely because choosing one silently reads as taking a side.
 function namesBlock(names = {}) {
   const rows = [
     ["Arabic", names.arabic],
     ["Hebrew", names.hebrew],
     ["Pre-1948", names.pre_1948],
   ].filter(([, v]) => v);
-  if (!rows.length) return "";
-  return `<h4>Names</h4><dl>${rows
-    .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`)
-    .join("")}</dl>`;
+  const variants = (names.transliterations || []).filter(Boolean);
+  if (!rows.length && !variants.length) return "";
+  return `<div class="translations">
+    <h4>Translations</h4>
+    <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd lang="${
+      k === "Arabic" ? "ar" : k === "Hebrew" ? "he" : "en"
+    }">${esc(v)}</dd>`).join("")}
+    ${variants.length ? `<dt>Also written</dt><dd>${esc(variants.join(", "))}</dd>` : ""}
+    </dl>
+  </div>`;
 }
 
 
@@ -156,6 +165,7 @@ export function renderDetail(feature, meta, oralHistories) {
     host.innerHTML = `
       <span class="kind">Destruction of resource access</span>
       <h3>${esc(p.name)}</h3>
+      ${namesBlock(names)}
       <dl>
         <dt>Recorded incidents</dt><dd>${p.record_count}</dd>
         <dt>District</dt><dd>${esc(p.district || "—")}</dd>
@@ -167,7 +177,6 @@ export function renderDetail(feature, meta, oralHistories) {
       } did not match a resource category and are counted separately rather than
       forced into one.</p>` : ""}
       ${violationRows ? `<h4>Violation types</h4><ul class="evidence">${violationRows}</ul>` : ""}
-      ${namesBlock(names)}
       <h4>Sources</h4>${evidenceList(evidence)}
       <div class="warn">
         Counts are incidents recorded, not quantities destroyed. Coverage is
@@ -203,6 +212,7 @@ export function renderDetail(feature, meta, oralHistories) {
         p.depopulated_1948 ? "Depopulated locality · 1948" : "Palestinian locality"
       }</span>
       <h3>${esc(p.name)}</h3>
+      ${namesBlock(names)}
       <dl>
         <dt>District</dt><dd>${esc(p.district || "—")}</dd>
         ${p.subdistrict ? `<dt>Subdistrict</dt><dd>${esc(p.subdistrict)}</dd>` : ""}
@@ -217,7 +227,6 @@ export function renderDetail(feature, meta, oralHistories) {
             .map((x) => `${esc(x.group)} ${x.value.toLocaleString()}`)
             .join(" · ")}</p>`
         : ""}
-      ${namesBlock(names)}
       ${refLinks ? `<h4>Further documentation</h4><ul class="evidence">${refLinks}</ul>` : ""}
       ${oralHistoryBlock(p, oralHistories)}
       <h4>Sources</h4>${evidenceList(evidence)}
@@ -258,6 +267,7 @@ export function renderDetail(feature, meta, oralHistories) {
   host.innerHTML = `
     <span class="kind">${esc((p.entity_type || "").replace("_", " "))}</span>
     <h3>${esc(p.name)}</h3>
+    ${namesBlock(names)}
     <dl>
       <dt>Measured as</dt><dd>${esc(extent?.label || p.extent_type)}</dd>
       <dt>Area</dt><dd>${km2(p.area_m2)}</dd>
@@ -268,7 +278,6 @@ export function renderDetail(feature, meta, oralHistories) {
         : ""}
     </dl>
     <p class="hint">${esc(meta.extent_definitions?.[p.extent_type] || "")}</p>
-    ${namesBlock(names)}
     ${stageHistoryBlock(history, meta)}
     <h4>Sources</h4>${evidenceList(evidence)}
     ${unidentified ? `<div class="warn">
