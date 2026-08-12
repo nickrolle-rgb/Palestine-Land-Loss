@@ -50,6 +50,9 @@ Template:
   any wider promotion.
 - Source flag: `pom_localities` remains `enabled=True`, now with a settled
   licence position.
+- Reply drafted at `pom-reply.md`: confirms the three conditions are implemented
+  and test-enforced, answers the preview request honestly (the site went live
+  first), and reports two coordinate errors in their data back to them.
 
 ## B'Tselem
 - Requested: 2026-08-10
@@ -81,6 +84,11 @@ Template:
   `settlements-muni-border` = municipal jurisdiction (520 km², 9.2%), but that is
   inference from magnitude, not their stated definition.
 - Source flag: `btselem` flipped to `enabled=True` on this commit.
+- Nick replied 2026-08-11 thanking Shirly and inviting her to follow the work.
+- Follow-up drafted at `btselem-followup.md` with the three outstanding asks:
+  regional council jurisdiction, confirmation that "fair usage" covers
+  republishing the four files as layers, and which file matches which of their
+  own definitions.
 
 ## Peace Now (Settlement Watch)
 - Requested: 2026-08-10

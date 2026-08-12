@@ -56,7 +56,9 @@ request below is for their *planning-stage* data, which is not on HDX.
 | `peace-now.md` | Peace Now (Settlement Watch) | Planning-stage, tender, construction-start and outpost data | High — unblocks stages 1–5 |
 | `btselem.md` | B'Tselem | Municipal and regional council jurisdiction boundaries | High — unblocks two empty layers |
 | `alhaq.md` | Al-Haq | Courtesy notice + confirmation the link-out approach is acceptable | Medium |
-| `ocha-demolition-data.md` | OCHA oPt | Machine-readable export of the demolition database (Power BI only today) | Medium — format request, not permission |
+| `ocha-demolition-data.md` | OCHA oPt | Machine-readable export of the demolition database, plus the Gaza Yellow/Orange lines | Medium — format request, not permission |
+| `pom-reply.md` | Palestine Open Maps | Reply confirming conditions met; answers the preview request; reports two coordinate errors back | Ready to send |
+| `btselem-followup.md` | B'Tselem | Regional council boundaries; licence scope; which file is which definition | Ready to send |
 
 These are **drafts for you to review and send**. Nothing has been sent.
 
