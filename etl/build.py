@@ -25,6 +25,7 @@ from .adapters import ocha_violence
 from .adapters import poha as poha_adapter
 from .fetch import PROCESSED, write_json
 from .geo import bounds_of, count_vertices, geometry_area_m2, simplify_geometry
+from .coverage import compute_coverage
 from .merge import apply_name_overrides, merge_localities
 from .search import build_index
 from .schema import (
@@ -318,6 +319,28 @@ def build_base() -> dict:
             "are withheld rather than plotted."
         ),
     )
+    # How much land the selected measures cover *together*. Built-up sits inside
+    # its municipal boundary, so selecting both must count that ground once;
+    # firing zones largely fall outside both, so they do add. A sum would be
+    # wrong, so this is a real union, rasterised because there is no geometry
+    # library here.
+    print("[cover] overlap-aware coverage")
+    coverage = compute_coverage(
+        [
+            ("built_up", json.loads((PROCESSED / "settlements_built_up.geojson").read_text(encoding="utf-8"))["features"]),
+            ("settlement_boundary", json.loads((PROCESSED / "settlements_settlement_boundary.geojson").read_text(encoding="utf-8"))["features"]),
+            ("municipal", json.loads((PROCESSED / "settlements_municipal.geojson").read_text(encoding="utf-8"))["features"]),
+            ("closed_military_area", json.loads((PROCESSED / "firing_zones.geojson").read_text(encoding="utf-8"))["features"]),
+        ],
+        json.loads((PROCESSED / "oslo_areas.geojson").read_text(encoding="utf-8"))["features"],
+    )
+    all_four = coverage["combinations"].get(
+        "built_up+closed_military_area+municipal+settlement_boundary", {}
+    )
+    print(f"        grid {coverage['cell_metres']} m | denominator "
+          f"{coverage['denominator_km2']:,.0f} km2 | all measures together "
+          f"{all_four.get('km2', 0):,.0f} km2 ({all_four.get('pct')}%)")
+
     print("[search] name index")
     index = build_index(localities, entities)
     write_json(PROCESSED / "search_index.json", index)
@@ -382,6 +405,7 @@ def build_base() -> dict:
         "municipal_stats": muni_stats,
         "west_bank_km2": round(west_bank_km2, 1),
         "land_measures": land_measures,
+        "coverage": coverage,
         "bounds": bounds_of(all_feats),
     }
 

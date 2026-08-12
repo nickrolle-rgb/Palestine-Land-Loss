@@ -695,6 +695,39 @@ function figureFor(id) {
   return `<span class="measure-figure">${m.km2.toLocaleString()} km²${pct}</span>`;
 }
 
+/** The overlap-aware total for whatever is currently ticked. */
+function updateLandTotal() {
+  const el = $("#land-total");
+  if (!el) return;
+  const coverage = (state.meta.stats || {}).coverage || {};
+  const selected = [...document.querySelectorAll("#extent-toggles input:checked")]
+    .map((i) => i.closest(".toggle").dataset.id)
+    .map((id) => (id === "firing" ? "closed_military_area" : id))
+    .filter((id) => (coverage.combinations || {})[id] !== undefined || id !== "regional_council");
+
+  const key = selected.slice().sort().join("+");
+  const hit = (coverage.combinations || {})[key];
+
+  if (!selected.length) {
+    el.innerHTML = `<span class="lt-lead">Nothing selected.</span>
+      <span class="lt-note">Tick a measure to see how much of the West Bank it covers.</span>`;
+    return;
+  }
+  if (!hit) {
+    el.innerHTML = `<span class="lt-note">No combined figure for this selection.</span>`;
+    return;
+  }
+  const overlapping = selected.length > 1;
+  el.innerHTML =
+    `<span class="lt-figure">${hit.pct}%</span>
+     <span class="lt-lead">of the West Bank — ${hit.km2.toLocaleString()} km²</span>
+     <span class="lt-note">${
+       overlapping
+         ? "Counted once where the measures overlap, so this is the ground covered, not the measures added up."
+         : "Of a West Bank of " + Math.round(coverage.denominator_km2).toLocaleString() + " km², measured from the Oslo areas on this map."
+     }</span>`;
+}
+
 function buildExtentToggles(map) {
   const host = $("#extent-toggles");
 
@@ -714,6 +747,7 @@ function buildExtentToggles(map) {
       const vis = e.target.checked ? "visible" : "none";
       map.setLayoutProperty(`settlements-${key}-fill`, "visibility", vis);
       map.setLayoutProperty(`settlements-${key}-line`, "visibility", vis);
+      updateLandTotal();
     });
     host.appendChild(row);
   }
@@ -738,8 +772,10 @@ function buildExtentToggles(map) {
     ["firing-fill", "firing-line"].forEach(
       (l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis)
     );
+    updateLandTotal();
   });
   host.appendChild(firingRow);
+  updateLandTotal();
 }
 
 function buildMechanismToggles(map) {
@@ -1108,8 +1144,19 @@ async function init() {
   });
 
   renderAbout(state.meta, state.data);
-  $("#about-open").addEventListener("click", () => $("#about").showModal());
-  $("#about-close").addEventListener("click", () => $("#about").close());
+  const about = $("#about");
+  $("#about-open").addEventListener("click", () => about.showModal());
+  $("#about-close").addEventListener("click", () => about.close());
+  // Clicking the backdrop closes it. The dialog element reports clicks on its
+  // own padding box, so compare against the content rectangle rather than
+  // relying on the target, which is the dialog either way.
+  about.addEventListener("click", (e) => {
+    const r = about.getBoundingClientRect();
+    const outside =
+      e.clientX < r.left || e.clientX > r.right ||
+      e.clientY < r.top || e.clientY > r.bottom;
+    if (outside) about.close();
+  });
 }
 
 init().catch((err) => {

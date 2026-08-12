@@ -8,7 +8,6 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "//": "Data and code must invalidate together. An earlier max-age=3600 let browsers hold stale GeoJSON for an hour after a deploy while HTML and JS updated immediately, so the interface reported counts from data it was no longer using. The browser now always revalidates (cheap: ETags make it a 304), while Vercel's CDN still caches until the next deploy purges it.",
           "value": "public, max-age=0, must-revalidate, s-maxage=31536000"
         }
       ]

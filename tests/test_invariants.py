@@ -197,6 +197,66 @@ class LocalitiesAreReconciled(unittest.TestCase):
                 self.assertGreaterEqual(len(sources), 1)
 
 
+class CoverageIsAUnion(unittest.TestCase):
+    """Selecting two measures must count shared ground once, not twice."""
+
+    def _coverage(self):
+        cov = (load("meta.json").get("stats") or {}).get("coverage") or {}
+        if not cov.get("combinations"):
+            raise unittest.SkipTest("coverage not computed")
+        return cov
+
+    def test_combined_never_exceeds_the_sum(self):
+        cov = self._coverage()
+        combos = cov["combinations"]
+        for key, value in combos.items():
+            parts = key.split("+")
+            if len(parts) < 2:
+                continue
+            naive = sum(combos[p]["km2"] for p in parts)
+            with self.subTest(combination=key):
+                self.assertLessEqual(
+                    value["km2"], naive + 0.5,
+                    "a union cannot be larger than the sum of its parts",
+                )
+
+    def test_combined_never_less_than_its_largest_part(self):
+        cov = self._coverage()
+        combos = cov["combinations"]
+        for key, value in combos.items():
+            parts = key.split("+")
+            if len(parts) < 2:
+                continue
+            largest = max(combos[p]["km2"] for p in parts)
+            with self.subTest(combination=key):
+                self.assertGreaterEqual(
+                    value["km2"], largest - 0.5,
+                    "adding a measure cannot reduce the ground covered",
+                )
+
+    def test_built_up_sits_inside_municipal(self):
+        """The containment the running total exists to handle."""
+        combos = self._coverage()["combinations"]
+        built = combos["built_up"]["km2"]
+        muni = combos["municipal"]["km2"]
+        both = combos["built_up+municipal"]["km2"]
+        self.assertLess(
+            both, built + muni,
+            "built-up and municipal must overlap; if they did not, the running "
+            "total would be a plain sum and this feature would be pointless",
+        )
+
+    def test_rasterised_denominator_matches_the_polygon_area(self):
+        """The grid is only trustworthy if it reproduces a known figure."""
+        cov = self._coverage()
+        stats = load("meta.json")["stats"]
+        self.assertAlmostEqual(
+            cov["denominator_km2"] / stats["west_bank_km2"], 1.0, delta=0.02,
+            msg="rasterised West Bank area diverges from the polygon area by "
+                "more than 2% — the grid is not reliable",
+        )
+
+
 class NoInventedNames(unittest.TestCase):
     """Rule: never guess a settlement's identity from size and position."""
 

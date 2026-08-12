@@ -175,6 +175,14 @@ html, body {
   background: var(--surface); color: var(--ink);
   border: 1px solid var(--line); border-radius: 12px; padding: 26px 30px;
 }
+/* The close button follows the scroll rather than sitting at the top of a long
+   document, so it is never more than a glance away. */
+#about .close {
+  position: sticky; top: 0; float: right; z-index: 1;
+  background: var(--surface); border-radius: 50%;
+  width: 30px; height: 30px; display: grid; place-items: center;
+  box-shadow: 0 0 12px 6px var(--surface);
+}
 #about::backdrop { background: rgba(0,0,0,.6); }
 #about h2 { margin-top: 24px; font-size: 15px; }
 #about h2:first-child { margin-top: 0; }
@@ -249,10 +257,16 @@ details.block > summary {
 }
 details.block > summary::-webkit-details-marker { display: none; }
 details.block > summary h2 { margin: 0; flex: 1; }
-details.block > summary::after {
-  content: "+"; color: var(--ink-dim); font-size: 14px; line-height: 1;
+/* A disclosure triangle on the left, rotating open — clearer than a +/− on the
+   right, and it reads as "expandable" without needing to be explained. */
+details.block > summary::before {
+  content: ""; flex: none; width: 0; height: 0;
+  border-left: 5px solid var(--ink-dim);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform .15s ease;
 }
-details.block[open] > summary::after { content: "2"; }
+details.block[open] > summary::before { transform: rotate(90deg); }
 details.block > summary:hover h2, details.block > summary:focus-visible h2 { color: var(--ink); }
 .warn-inline { color: #fbbf24; }
 .measure-figure {
@@ -269,3 +283,15 @@ details.block > summary:hover h2, details.block > summary:focus-visible h2 { col
 .translations dd[lang="ar"], .translations dd[lang="he"] {
   font-size: 15px; direction: rtl; text-align: right;
 }
+
+.land-total {
+  margin: 10px 0 0; padding: 10px 12px;
+  background: rgba(217,119,6,.10); border: 1px solid rgba(217,119,6,.30);
+  border-radius: 8px;
+}
+.lt-figure {
+  display: block; font-size: 26px; line-height: 1.1; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.lt-lead { display: block; font-size: 12.5px; margin-top: 2px; }
+.lt-note { display: block; font-size: 11px; color: var(--ink-dim); margin-top: 5px; }
