@@ -280,37 +280,25 @@ which is the first non-shapefile format the ETL would take on.
 | State of Palestine — Health Facilities | OCHA | CC BY | SHP — has geometry, covers Gaza |
 | Palestinian Camp in Lebanon | — | CC BY | XLSX |
 
-### Detention — a different problem, and a different answer
+### Detention — moved to a sibling project, 2026-08-12
 
-Sources exist and are actively maintained:
+Detention was researched as a candidate layer and deliberately ruled out. It is
+theft of freedom rather than land: a real continuity with what this map
+documents, and a different claim resting on different evidence. It has no
+locality-level geodata, so it could only ever be a table, and folding it into a
+land map would have blurred both arguments.
 
-- **B'Tselem** — statistics on administrative detention and on Palestinians in
-  Israeli custody. We already hold their licence. **Their site returns HTTP 429
-  to every automated request**, so this would need manual retrieval or a direct
-  ask.
-- **HaMoked** — prisoner charts obtained from the Israel Prison Service by
-  freedom-of-information request, current to August 2026. Returns HTTP 403 to
-  automated fetching.
-- **Addameer** — monthly updates on Palestinian political detainees.
-- **Israel Prison Service** — since the end of 2020 the IPS stopped supplying
-  figures to B'Tselem on request and publishes some data quarterly itself.
+Scoped separately in `sibling-project-detention.md`, including the sources
+already found, the access obstacles, and the constraints any such project would
+inherit. This map should link to it rather than absorb it.
 
-Scale, to indicate the order: roughly **3,198 administrative detainees** held
-without charge or trial as of August 2026, against **3,532** in April 2026 and
-**3,474** at the end of September 2025, with total Palestinian prisoners
-reported above 9,600.
+### What would actually close this gap
 
-**Three constraints shape what can honestly be built:**
+In order of value:
 
-1. **It is not land loss.** Detention is a distinct mechanism, and the rule that
-   keeps 1948 apart from post-1967 applies with equal force here. It would need
-   its own section and its own framing, not a fifth colour on the land layer.
-2. **It is published as national aggregates, not geolocated.** A table over time
-   by category is supportable. A map layer is not — there is no published
-   locality-level breakdown to place, and inventing one would breach the
-   no-guessed-locations rule.
-3. **Rule 6 forbids mapping individuals.** Aggregate counts only. That happens to
-   match how these organisations publish, so the constraint costs nothing.
-
-Figures also differ between sources and dates, so each must carry its own source
-and as-at date rather than being reconciled into one number.
+1. **UNRWA registered refugees** — verified above. The largest single step from
+   "West Bank areas" to Palestine-wide.
+2. **The four Gaza layers** in §11 — gives Gaza its first measured area and its
+   own computed denominator.
+3. **Regional council jurisdiction** from B'Tselem — the missing West Bank
+   measure, and probably the largest.

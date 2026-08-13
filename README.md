@@ -175,6 +175,15 @@ One wrinkle worth knowing: OCHA's "State of Palestine Settlements" layer on HDX
 via HDX is already permitted with attribution to both. That is not the same as
 scraping Peace Now directly.
 
+## Scope
+
+This map documents **land**. Detention — theft of freedom rather than land — was
+researched and deliberately kept out: it has no locality-level geodata, so it
+could only be a table, and folding it into a land map would blur both arguments.
+It is scoped as a sibling project in
+[docs/sibling-project-detention.md](docs/sibling-project-detention.md), which
+this map should link to rather than absorb.
+
 ## Known gaps
 
 These are real and they limit what the map can currently claim:
