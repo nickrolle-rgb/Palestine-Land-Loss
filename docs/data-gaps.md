@@ -241,3 +241,76 @@ database, and mostly **Geodatabase**, which the GDAL-free ETL cannot read.
 The denominator question is answered: Gaza's municipal boundaries sum to 365 km²,
 so a Gaza percentage can be computed exactly as the West Bank's is, from geometry
 on the map rather than a quoted figure.
+
+## 12. Beyond the West Bank — what exists, researched 2026-08-12
+
+The project is called Palestinian Land Loss but measures *area* in the West Bank
+only. That is a real shortfall, not a presentational one. This records what is
+available to close it.
+
+### Displacement across all fields — available and verified
+
+**UNRWA Palestine Refugees** (CC BY-IGO, XLSX, updated quarterly, last 2025 Q4)
+was downloaded and parsed successfully. It is the consequence of the loss this
+map documents, counted where the displaced ended up:
+
+| Field | Registered refugees |
+|---|---|
+| Jordan | 2,398,179 |
+| Gaza | 1,545,991 |
+| West Bank | 938,589 |
+| Syria | 357,985 |
+| Lebanon | 228,274 |
+| Unknown | 495,764 |
+| **Total** | **5,964,782** |
+
+Broken down by sex and age band, quarterly back through the series. Not
+geolocated — it is field-level aggregate — so it belongs in a table or a
+five-field choropleth, not as points.
+
+Reading it needs `openpyxl`, a pure-Python addition with no system dependencies,
+which is the first non-shapefile format the ETL would take on.
+
+### Also available
+
+| Dataset | Publisher | Licence | Note |
+|---|---|---|---|
+| State of Palestine — Subnational Population Statistics | PCBS via OCHA | CC BY-IGO | CSV; population by governorate |
+| Escalations in Gaza — Killed & Injured Persons | OCHA | CC BY | XLSX |
+| State of Palestine — Health Facilities | OCHA | CC BY | SHP — has geometry, covers Gaza |
+| Palestinian Camp in Lebanon | — | CC BY | XLSX |
+
+### Detention — a different problem, and a different answer
+
+Sources exist and are actively maintained:
+
+- **B'Tselem** — statistics on administrative detention and on Palestinians in
+  Israeli custody. We already hold their licence. **Their site returns HTTP 429
+  to every automated request**, so this would need manual retrieval or a direct
+  ask.
+- **HaMoked** — prisoner charts obtained from the Israel Prison Service by
+  freedom-of-information request, current to August 2026. Returns HTTP 403 to
+  automated fetching.
+- **Addameer** — monthly updates on Palestinian political detainees.
+- **Israel Prison Service** — since the end of 2020 the IPS stopped supplying
+  figures to B'Tselem on request and publishes some data quarterly itself.
+
+Scale, to indicate the order: roughly **3,198 administrative detainees** held
+without charge or trial as of August 2026, against **3,532** in April 2026 and
+**3,474** at the end of September 2025, with total Palestinian prisoners
+reported above 9,600.
+
+**Three constraints shape what can honestly be built:**
+
+1. **It is not land loss.** Detention is a distinct mechanism, and the rule that
+   keeps 1948 apart from post-1967 applies with equal force here. It would need
+   its own section and its own framing, not a fifth colour on the land layer.
+2. **It is published as national aggregates, not geolocated.** A table over time
+   by category is supportable. A map layer is not — there is no published
+   locality-level breakdown to place, and inventing one would breach the
+   no-guessed-locations rule.
+3. **Rule 6 forbids mapping individuals.** Aggregate counts only. That happens to
+   match how these organisations publish, so the constraint costs nothing.
+
+Figures also differ between sources and dates, so each must carry its own source
+and as-at date rather than being reconciled into one number.
