@@ -54,6 +54,18 @@ If the Yellow and Orange lines could be published as geodata, or added to the
 existing buffer dataset, they would be among the most useful layers available
 for the Gaza Strip.
 
+**A concrete example of the cost, from this week**
+
+On 13 August 2026 Al Jazeera reported the demolition of two Daraghmeh family
+homes at Ein el-Hilweh in the northern Jordan Valley, and cited your figures for
+the context: more than 907 Palestinian structures demolished in the West Bank
+this year, and more than 6,200 people forcibly displaced since January 2023.
+
+Ein el-Hilweh is already on my map as a locality. The demolition is not, and
+cannot be, because the record of it lives only in the dashboard. A journalist
+can quote your number; a map cannot place your event. That gap is the whole of
+this request.
+
 **Why it matters for this map**
 
 I currently show destruction of resource access — water, farmland, livestock,

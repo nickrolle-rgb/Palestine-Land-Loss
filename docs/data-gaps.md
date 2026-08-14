@@ -302,3 +302,60 @@ In order of value:
    own computed denominator.
 3. **Regional council jurisdiction** from B'Tselem — the missing West Bank
    measure, and probably the largest.
+
+## 13. Worked example — two news events, 13 August 2026
+
+Two articles were checked against the build to test a plain question: can this
+map document what happened this week?
+
+### Demolition at Ein el-Hilweh, northern Jordan Valley
+
+Two homes of the Daraghmeh family demolished on 2 and 28 July 2026. The family
+held an Israeli Supreme Court injunction; no formal demolition order was
+presented.
+
+- **The place is on the map.** `Ein al Hilwa` (Tubas), plus `Ein al Hilwa - Wadi
+  al Faw` and `Ein al Hilwa - Um al Jmal`.
+- **The event is not.** Our Al-Haq layer holds 31 plotted records and none from
+  July 2026; the OCHA resource-destruction layer covers Masafer Yatta and 2025
+  only, and the Jordan Valley is outside it.
+- **OCHA does hold it.** The article cites OCHA for the aggregates — more than
+  **907 Palestinian structures demolished in the West Bank this year**, and more
+  than **6,200 Palestinians forcibly displaced since January 2023, including
+  3,000 children**. OCHA's own page states demolitions usually appear there
+  within 48 hours.
+
+So the data exists, is current within two days, and is **published only as an
+embedded Power BI dashboard**. This is the request already drafted in
+`permissions/ocha-demolition-data.md`, and this is what it costs.
+
+### Re-establishment of Ganim, northern West Bank
+
+Around 30 settler families returned on 13 August 2026, following the December
+2025 cabinet decision granting legal status to 19 settlements. Ganim was
+evacuated under the 2005 disengagement, along with Kadim, Homesh and Sa-Nur.
+
+The map handles this better than expected. Ganim, Homesh and Sa-Nur are **absent
+from the settlement layers** — correctly, since B'Tselem's inventory records
+settlements that exist — while Palestine Open Maps carries all three as
+localities marked `status_now = "Abandoned"`, `group_now = "Jewish"`, with no
+1945 population because they are post-1967 creations.
+
+The map is therefore accurate as at 12 August 2026 and one day stale as at the
+13th. Tracking that change is **settlement-approval data, which is Peace Now's**,
+not OCHA's — the other outstanding request.
+
+A detail worth keeping: `Sanur` (Jenin) is a Palestinian locality, status
+`Remaining`, while `Sa-nur` (Samaria) is the abandoned settlement. Two places,
+near-identical names. The type-aware handling built for Susiya keeps them apart.
+
+### What "document when they happen" actually requires
+
+Three things, none of them the map itself:
+
+1. **The data published as data.** Both requests already cover this.
+2. **A scheduled rebuild.** OCHA refreshes within 48 hours; this build runs when
+   someone runs it. Currency is a pipeline property, not a data property.
+3. **A rule for individual incidents.** Rule 6 forbids mapping individuals. A
+   demolition is recorded at its locality with structure counts and displacement
+   figures — never a named family or an address.
