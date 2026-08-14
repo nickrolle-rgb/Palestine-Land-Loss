@@ -1,0 +1,69 @@
+name: Weekly rebuild
+
+# The sources move at different speeds. Al-Haq publishes new field records
+# monthly, HDX layers are revised occasionally, and OCHA's demolition database
+# updates within 48 hours of an incident — though only into a Power BI dashboard
+# we cannot yet read. A weekly rebuild keeps the map no more than seven days
+# behind whatever is actually published, and means the pipeline is already
+# running on the day any of those sources opens up.
+
+on:
+  schedule:
+    # 06:00 UTC Monday — early morning in Palestine, mid-afternoon in Melbourne.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-rebuild
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Rebuild from sources
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python -m etl.build all
+
+      # The invariants are the whole point of the project, so an automated
+      # commit must not be able to bypass them. If a source changes shape and
+      # breaks a rule — an unplaceable record reaching the map, a citation going
+      # dangling, a locality landing outside historic Palestine — the run fails
+      # and nothing is published.
+      - name: Verify the non-negotiables
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python -m unittest discover tests -v
+
+      - name: Commit if the data changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- web/public/data; then
+            echo "No change in the sources this week."
+            exit 0
+          fi
+          echo "Changed files:"
+          git diff --stat -- web/public/data
+          git add web/public/data
+          git commit -m "Weekly rebuild: refresh data from sources
+
+          Automated. Built and verified against tests/test_invariants.py before
+          committing — if an invariant had failed, this commit would not exist."
+          git push

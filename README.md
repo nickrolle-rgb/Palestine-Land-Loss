@@ -175,6 +175,17 @@ One wrinkle worth knowing: OCHA's "State of Palestine Settlements" layer on HDX
 via HDX is already permitted with attribution to both. That is not the same as
 scraping Peace Now directly.
 
+## Keeping it current
+
+A GitHub Action rebuilds from source every Monday and commits only if the data
+changed — and only if `tests/test_invariants.py` still passes. An automated
+commit must not be able to bypass the rules the project rests on, so a source
+that changes shape and breaks one fails the run instead of publishing.
+
+Currency is a property of the pipeline, not the data. OCHA refresh demolition
+records within 48 hours of an incident; the limit on how fresh this map can be
+is what they publish as data, not how often it is built.
+
 ## Scope
 
 This map documents **land**. Detention — theft of freedom rather than land — was

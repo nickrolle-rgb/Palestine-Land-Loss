@@ -59,6 +59,13 @@ look better is the worst possible trade.
   `docs/corrections.md`, not propagated (e.g. OCHA's literal `West Bsnk` typo).
 - British/Australian spelling in prose; the codebase uses `licence` for the noun.
 
+## Automation
+
+`.github/workflows/weekly-rebuild.yml` runs `etl.build all` every Monday, then
+the test suite, then commits only if `web/public/data` changed. The ordering is
+deliberate: **tests gate the commit**, so an automated run can never publish data
+that breaks an invariant.
+
 ## Commands
 
 ```bash
