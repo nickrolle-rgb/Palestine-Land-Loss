@@ -23,7 +23,14 @@ const state = {
 // --------------------------------------------------------------------------
 
 async function loadJSON(name, { optional = false } = {}) {
-  const res = await fetch(`${DATA}/${name}`);
+  // Everything except meta.json is requested with the build version appended, so
+  // it can be cached immutably and re-fetched only when it genuinely changes.
+  // meta.json is the one file that must be revalidated — it carries the version.
+  const version = state.meta && state.meta.build_id;
+  const url = version && name !== "meta.json"
+    ? `${DATA}/${name}?v=${version}`
+    : `${DATA}/${name}`;
+  const res = await fetch(url);
   if (!res.ok) {
     if (optional) return null;
     throw new Error(`${name}: ${res.status}`);

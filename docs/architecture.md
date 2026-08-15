@@ -147,3 +147,26 @@ Merged localities keep **both coordinates**: Palestine Open Maps marks the 1945
 village, OCHA the present-day centre, and at Beituniya those differ by 1,175 m.
 The client uses the historical position whenever a historical sheet is showing,
 so a dot does not float away from the village it names.
+
+
+## Caching, and why it is versioned rather than revalidated
+
+Vercel counts a 304 as an edge request, exactly like a 200. So
+`max-age=0, must-revalidate` — which an earlier fix applied to every data file
+to stop stale GeoJSON being served after a deploy — meant **every visit
+re-requested all eighteen data files**, with no browser caching benefit and full
+billing cost. On a free tier capped at a million edge requests, that is the
+difference between a site that stays up and one that pauses.
+
+The fix is the standard one, and it solves both problems at once:
+
+- `etl.build` stamps `meta.json` with a `build_id`: a short hash over the size
+  and content of every published data file.
+- The client requests everything except `meta.json` with `?v=<build_id>`.
+- `vercel.json` serves `/public/data/*` as `max-age=31536000, immutable`, and
+  `meta.json` alone as `must-revalidate`.
+
+A repeat visitor therefore makes **one** conditional request — for `meta.json` —
+and serves every data file from cache. When the data genuinely changes the hash
+changes, the URLs change, and the browser fetches the new files. Correctness and
+frugality stop being in tension, which is what the first attempt got wrong.

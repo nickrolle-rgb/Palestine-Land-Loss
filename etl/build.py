@@ -519,11 +519,32 @@ def build_incidents(localities) -> dict:
     }
 
 
+def _build_id() -> str:
+    """A short hash of the published data.
+
+    Data URLs carry this as ?v=, which lets the files be cached immutably: the
+    browser re-fetches only when the content actually changes, instead of
+    revalidating every file on every visit. Revalidation is not free — Vercel
+    counts a 304 as an edge request just like a 200.
+    """
+    import hashlib
+
+    digest = hashlib.sha256()
+    for path in sorted(PROCESSED.glob("*.geojson")) + sorted(PROCESSED.glob("*.json")):
+        if path.name == "meta.json":
+            continue
+        digest.update(path.name.encode())
+        digest.update(str(path.stat().st_size).encode())
+        digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()[:12]
+
+
 def write_meta(stats: dict) -> None:
     write_json(
         PROCESSED / "meta.json",
         {
             "built": date.today().isoformat(),
+            "build_id": _build_id(),
             "project": "Palestinian Land Loss",
             "pilot_area": "East Jerusalem",
             "view": EJ_VIEW,
