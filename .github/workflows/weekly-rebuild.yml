@@ -26,9 +26,13 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      # Both actions are held at majors that run on Node 24. The v4/v5 pair
+      # they replaced targeted Node 20, which GitHub now force-upgrades at
+      # runtime and warns about on every run — a warning that becomes a
+      # failure whenever the runners drop the shim.
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
