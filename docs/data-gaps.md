@@ -359,3 +359,29 @@ Three things, none of them the map itself:
 3. **A rule for individual incidents.** Rule 6 forbids mapping individuals. A
    demolition is recorded at its locality with structure counts and displacement
    figures — never a named family or an address.
+
+## 14. The WZO Settlement Division — a stage-1 actor with no public data
+
+Since the early 1970s the Israeli government has allocated West Bank land
+through the **Settlement Division of the World Zionist Organization**, a body it
+finances and directs. Peace Now describe it as managing hundreds of thousands of
+dunams on the State's behalf and transferring them to settlers without effective
+supervision; the State Attorney's Office has put the grazing allocations alone at
+roughly 80,000 dunams.
+
+That makes it one of the largest single mechanisms of land transfer in the West
+Bank, and it sits squarely at **stage 1** of our pipeline — the stage that is
+already the least populated.
+
+**Why it is a gap and not a task:** a 2015 law shields the Settlement Division
+almost entirely from Israel's Freedom of Information Act. Kerem Navot, who have
+done the most work on this, state plainly that they know allocations happened but
+are blocked from the amounts, the recipients and the conditions, and have
+contemplated litigation to force the database open. There is no dataset to
+ingest, from them or anyone, because the State does not publish one.
+
+**Status:** not drawn, not estimated, and not inferrable from settlement extents
+— an allocation is not a building, and treating one as evidence of the other
+would break non-negotiable 1. Recorded here so the absence is visible. If Kerem
+Navot's petition ever succeeds this becomes the single highest-value ingest in
+the project.
