@@ -99,6 +99,72 @@ def _centroid(geom: dict[str, Any]) -> tuple[float, float]:
 
 # --------------------------------------------------------------------------
 
+#: Oslo II (Interim Agreement, 28 September 1995) placed these city centres
+#: under full Palestinian control — the definition of Area A. They are used
+#: here only as containment probes to tell OCHA's two identically-labelled
+#: polygons apart, never published as data.
+AREA_A_ANCHORS = {
+    "Ramallah": (35.2042, 31.8996),
+    "Nablus": (35.2544, 32.2211),
+    "Jenin": (35.3027, 32.4597),
+    "Tulkarm": (35.0286, 32.3104),
+    "Jericho": (35.4444, 31.8569),
+    "Bethlehem": (35.2094, 31.7054),
+    "Qalqilya": (34.9706, 32.1896),
+}
+
+
+def _split_mislabelled_area_b(out: list[dict[str, Any]]) -> None:
+    """OCHA's Oslo file labels Area B as 'A'. Separate them by containment.
+
+    The published shapefile carries CLASS='A' on two disjoint polygons. One is
+    Area A, the other is Area B, and nothing in the attribute table says which.
+    Leaving it produced a map asserting that 35.7% of the West Bank is Area A
+    when the real figure is 17.4% — a factor-of-two overstatement of Palestinian
+    civil *and* security control, and exactly the kind of error a hostile reader
+    would find first.
+
+    The Oslo II city centres are Area A by definition, so the polygon that
+    contains them is Area A and the other is Area B. This is the containment
+    standard used for settlement identification (non-negotiable 7), for the same
+    reason: proximity would be a guess, containment is a fact about the geometry.
+    It is re-run every build, so a source that fixes its own labelling, or
+    reshapes a polygon, cannot silently leave a stale relabel behind.
+    """
+    candidates = [f for f in out if f["properties"]["oslo_class"] == "A"]
+    if len(candidates) < 2:
+        return  # source corrected upstream, or a shape we do not recognise
+
+    def anchors_inside(feature):
+        return {n for n, c in AREA_A_ANCHORS.items()
+                if point_in_polygon(c, feature["geometry"])}
+
+    hits = {id(f): anchors_inside(f) for f in candidates}
+    with_cities = [f for f in candidates if hits[id(f)]]
+    without = [f for f in candidates if not hits[id(f)]]
+
+    # Refuse to guess. Area A must be exactly one polygon holding every anchor.
+    if len(with_cities) != 1 or len(without) != len(candidates) - 1:
+        raise ValueError(
+            "Oslo A/B disambiguation is ambiguous — "
+            f"{[sorted(hits[id(f)]) for f in candidates]}. Refusing to relabel."
+        )
+    missing = set(AREA_A_ANCHORS) - hits[id(with_cities[0])]
+    if missing:
+        raise ValueError(
+            f"Oslo Area A polygon does not contain {sorted(missing)}. "
+            "The source geometry has changed; re-verify before relabelling."
+        )
+
+    for f in without:
+        f["properties"]["oslo_class"] = "B"
+        f["properties"]["class_corrected"] = (
+            "Source labelled this polygon 'A'. Reassigned to Area B: it contains "
+            "none of the Oslo II Area A city centres, which all fall inside the "
+            "other 'A' polygon. See docs/corrections.md."
+        )
+
+
 def load_oslo_areas() -> list[dict[str, Any]]:
     r = resource("oslo_areas")
     path = download(r.url, r.filename)
@@ -123,6 +189,7 @@ def load_oslo_areas() -> list[dict[str, Any]]:
                 },
             }
         )
+    _split_mislabelled_area_b(out)
     return out
 
 

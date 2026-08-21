@@ -544,3 +544,47 @@ class AttributionConditions(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OsloClassesAreDisambiguated(unittest.TestCase):
+    """Rule 3, applied to the Oslo split: never conflate two definitions.
+
+    OCHA publish Area A and Area B under the same CLASS='A' label. Shipping
+    that unchanged asserted 35.7% of the West Bank as Area A when the figure
+    is 17.4%, which overstates Palestinian control by roughly two-fold.
+    """
+
+    def setUp(self):
+        self.fc = load("oslo_areas.geojson")
+        self.by = {}
+        for f in self.fc["features"]:
+            self.by.setdefault(f["properties"].get("oslo_class"), []).append(f)
+
+    def test_area_a_and_b_are_separate_classes(self):
+        self.assertIn("A", self.by, "Area A missing from the Oslo layer")
+        self.assertIn("B", self.by, "Area B missing — the source relabel did not run")
+        self.assertEqual(len(self.by["A"]), 1, "Area A must be exactly one polygon")
+
+    def test_relabelled_features_say_so(self):
+        for f in self.by.get("B", []):
+            self.assertIn(
+                "class_corrected", f["properties"],
+                "a relabelled polygon must carry its correction note",
+            )
+
+    def test_shares_match_the_published_figures(self):
+        # OCHA publish A 18%, B 22%, C 60%. This file breaks Nature Reserve,
+        # East Jerusalem and No Man's Land out of those buckets, so B and C
+        # read low; A is not affected and is the check that the split is the
+        # right way round. A wrong assignment would put A near 18.3%/35%.
+        from etl.geo import geometry_area_m2
+        area = {k: sum(geometry_area_m2(f["geometry"]) for f in v)
+                for k, v in self.by.items()}
+        total = sum(area.values())
+        pct = {k: 100 * v / total for k, v in area.items()}
+        self.assertAlmostEqual(pct["A"], 18.0, delta=1.5,
+                               msg=f"Area A at {pct['A']:.2f}% — split may be inverted")
+        self.assertAlmostEqual(pct["C"], 60.0, delta=2.0,
+                               msg=f"Area C at {pct['C']:.2f}%")
+        self.assertGreater(pct["B"], pct["A"],
+                           "Area B is the larger of the two in every published figure")

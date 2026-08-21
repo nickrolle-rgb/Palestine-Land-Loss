@@ -257,3 +257,38 @@ shapefile's DBF uses an unreliable codepage and `FIRE_NAME` arrives as mangled
 Hebrew (e.g. `309à'`). Garbled labels are dropped rather than displayed — a
 visible encoding error invites doubt about everything else on the map — and those
 zones are identified by their signing date instead.
+
+## OCHA labels Area B as Area A
+
+**Source:** `osloagreement.zip`, State of Palestine — Oslo Agreement in the West
+Bank, document date 2019-07-22.
+
+**The quirk:** the shapefile has eight polygons and its `CLASS` field carries
+`'A'` on **two** of them — 1,034.7 km² and 982.3 km². Nothing in the attribute
+table distinguishes them. Taken at face value the file asserts that 35.66% of
+the West Bank is Area A, against OCHA's own published figure of 18%.
+
+**Why it mattered:** Area A is full Palestinian civil *and* security control;
+Area B is Palestinian civil control with Israeli security control. Merging them
+doubles the apparent extent of Palestinian authority — the single most
+load-bearing number on a map about land control, and an error that flatters the
+occupier. It is the Oslo-split instance of non-negotiable 3.
+
+**The fix:** `etl/adapters/ocha.py::_split_mislabelled_area_b`. Oslo II
+(28 September 1995) placed Jenin, Nablus, Tulkarm, Qalqilya, Ramallah,
+Bethlehem and Jericho under full Palestinian control, so those city centres are
+Area A by definition. The polygon containing all seven is Area A; the other is
+relabelled Area B and carries a `class_corrected` note stating why.
+
+Assignment is by **containment**, never proximity — the same standard
+non-negotiable 7 sets for settlement identification. It re-runs every build and
+**raises rather than guessing** if the anchors do not fall cleanly inside
+exactly one polygon, so a reshaped or upstream-corrected source cannot leave a
+stale relabel in place.
+
+**Result:** A 17.37%, B 18.30%, C 58.84%, against OCHA's published 18/22/60.
+B and C read low because this file breaks Nature Reserve (2.95%), Israeli
+Declared East Jerusalem (1.22%) and No Man's Land (0.88%) out into their own
+classes rather than folding them in — which is the correct behaviour under
+non-negotiable 3, and they are **not** folded back to make the totals match.
+Asserted by `tests/test_invariants.py::OsloClassesAreDisambiguated`.
