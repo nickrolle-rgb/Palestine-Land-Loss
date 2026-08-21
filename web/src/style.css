@@ -321,7 +321,7 @@ details.block > summary:hover h2, details.block > summary:focus-visible h2 { col
   line-height: 1.3;
 }
 .oslo-class .swatch {
-  width: 0.7rem; height: 0.7rem;
+  width: 0.8rem; height: 0.8rem;
   border-radius: 2px;
   align-self: center;
 }

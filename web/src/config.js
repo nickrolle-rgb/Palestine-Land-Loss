@@ -141,7 +141,10 @@ export const EXTENT_STYLE = {
 export const OSLO_CLASSES = [
   { id: "A", colour: "#10b981",
     meaning: "Palestinian civil and security control" },
-  { id: "B", colour: "#a3e635",
+  // Amber rather than a second green. Area B reads at a glance as a qualified
+  // version of A when the two share a hue, and "qualified" is the opposite of
+  // what Israeli security control means for the people living under it.
+  { id: "B", colour: "#eab308",
     meaning: "Palestinian civil control; Israeli security control" },
   { id: "C", colour: "#64748b",
     meaning: "Israeli civil and security control" },
