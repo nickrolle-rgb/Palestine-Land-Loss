@@ -296,6 +296,45 @@ export function renderDetail(feature, meta, oralHistories) {
 
 // --------------------------------------------------------------------------
 
+// An explainer is prose, so the citation discipline has to be visible at the
+// sentence level rather than once at the bottom: each claim carries its own
+// source, and figures we could not confirm are printed as open questions
+// instead of being quietly asserted or quietly dropped.
+export function renderExplainer(ex, meta) {
+  const body = document.getElementById("detail-body");
+  const claims = ex.claims.map((c) => {
+    const ev = resolveEvidence(c, meta);
+    return `<li class="claim">
+      <p class="claim-text${c.quote ? " quoted" : ""}">${esc(c.text)}</p>
+      ${evidenceList(ev)}
+    </li>`;
+  }).join("");
+
+  const legal = ex.legal_basis && ex.legal_basis.length
+    ? `<h4>Legal basis</h4><ul class="legal">${
+        ex.legal_basis.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`
+    : "";
+
+  const open = ex.unverified && ex.unverified.length
+    ? `<h4>Not asserted here</h4>
+       <p class="hint">Repeated widely, but not found in a source this project
+       can name. Listed so the gap is visible rather than filled in.</p>
+       <ul class="unverified">${
+         ex.unverified.map((u) => `<li>${esc(u)}</li>`).join("")}</ul>`
+    : "";
+
+  body.innerHTML = `
+    <p class="kicker">How the restrictions work</p>
+    <h3>${esc(ex.title)}</h3>
+    <p class="question">${esc(ex.question)}</p>
+    <p class="summary">${esc(ex.summary)}</p>
+    ${legal}
+    <h4>What the sources say</h4>
+    <ol class="claims">${claims}</ol>
+    ${open}`;
+  document.getElementById("detail").hidden = false;
+}
+
 export function renderAbout(meta, data) {
   const stats = meta.stats || {};
   const inc = data.incidents?.metadata || {};

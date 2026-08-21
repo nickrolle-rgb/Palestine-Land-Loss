@@ -4,7 +4,7 @@ import {
   OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
-import { renderAbout, renderDetail } from "./panels.js";
+import { renderAbout, renderDetail, renderExplainer } from "./panels.js";
 import { resultsMarkup, search } from "./search.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -50,6 +50,7 @@ async function loadAll() {
     ),
     localities: "localities.geojson",
     oslo: "oslo_areas.geojson",
+    explainers: "explainers.json",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -864,6 +865,24 @@ function buildMechanismToggles(map) {
   }
 }
 
+function buildExplainers() {
+  const host = document.getElementById("explainer-list");
+  if (!host) return;
+  const list = (state.data.explainers && state.data.explainers.explainers) || [];
+  if (!list.length) {
+    host.innerHTML = `<p class="hint">No explainers yet.</p>`;
+    return;
+  }
+  for (const ex of list) {
+    const b = document.createElement("button");
+    b.className = "explainer-item";
+    b.innerHTML = `<span class="explainer-title">${ex.title}</span>
+      <span class="explainer-q">${ex.question}</span>`;
+    b.addEventListener("click", () => renderExplainer(ex, state.meta));
+    host.appendChild(b);
+  }
+}
+
 function buildContextToggles(map) {
   const host = $("#context-toggles");
   const rows = [
@@ -1198,6 +1217,7 @@ async function init() {
       buildExtentToggles(map);
       buildMechanismToggles(map);
       buildContextToggles(map);
+      buildExplainers();
       buildHistoricalToggles(map);
       buildIncidentToggles(map);
       buildStageLegend();

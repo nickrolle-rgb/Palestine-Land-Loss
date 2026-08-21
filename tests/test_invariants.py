@@ -588,3 +588,57 @@ class OsloClassesAreDisambiguated(unittest.TestCase):
                                msg=f"Area C at {pct['C']:.2f}%")
         self.assertGreater(pct["B"], pct["A"],
                            "Area B is the larger of the two in every published figure")
+
+
+class ExplainersAreCited(unittest.TestCase):
+    """Prose gets the same rule as geometry: no claim without a citation.
+
+    An explainer is the easiest place in the project to smuggle in an
+    unsourced assertion, because prose reads as authoritative whether or not
+    anything stands behind it.
+    """
+
+    def setUp(self):
+        self.doc = load("explainers.json")
+        self.meta = load("meta.json")
+
+    def test_every_claim_resolves_to_a_citation(self):
+        table = self.meta["evidence"]
+        for ex in self.doc["explainers"]:
+            self.assertTrue(ex["claims"], f"{ex['id']} has no claims")
+            for c in ex["claims"]:
+                refs = c.get("evidence_ref") or []
+                self.assertTrue(refs, f"uncited claim in {ex['id']}: {c['text'][:60]}")
+                for r in refs:
+                    self.assertIn(r, table, f"dangling citation {r} in {ex['id']}")
+
+    def test_citations_carry_both_dates(self):
+        table = self.meta["evidence"]
+        for ex in self.doc["explainers"]:
+            for c in ex["claims"]:
+                for r in c.get("evidence_ref", []):
+                    ev = table[r]
+                    self.assertIn("document_date", ev,
+                                  f"{ex['id']} cites {ev.get('title')} with no document date")
+                    self.assertIn("retrieved", ev,
+                                  f"{ex['id']} cites {ev.get('title')} with no retrieval date")
+
+    def test_unverified_claims_are_not_presented_as_claims(self):
+        # Anything in `unverified` must not also appear as an asserted claim.
+        for ex in self.doc["explainers"]:
+            asserted = " ".join(c["text"] for c in ex["claims"]).lower()
+            for u in ex.get("unverified", []):
+                head = u.split(".")[0].lower()
+                self.assertNotIn(head, asserted,
+                                 f"{ex['id']} both asserts and disclaims: {head[:50]}")
+
+    def test_sources_are_registered_and_enabled(self):
+        from etl.sources import SOURCES
+        table = self.meta["evidence"]
+        for ex in self.doc["explainers"]:
+            for c in ex["claims"]:
+                for r in c.get("evidence_ref", []):
+                    sid = table[r]["source_id"]
+                    self.assertIn(sid, SOURCES, f"{ex['id']} cites unregistered source {sid}")
+                    self.assertTrue(getattr(SOURCES[sid], "enabled", True),
+                                    f"{ex['id']} cites disabled source {sid}")

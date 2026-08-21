@@ -338,3 +338,50 @@ details.block > summary:hover h2, details.block > summary:focus-visible h2 { col
   line-height: 1.45;
   opacity: 0.78;
 }
+
+/* Mechanism explainers. The list sits in the panel; the body reuses the
+   feature detail pane, because an explainer and a feature make the same
+   promise — everything here resolves to a dated document. */
+.explainer-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  margin: 0.35rem 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.explainer-item:hover { background: rgba(255, 255, 255, 0.07); }
+.explainer-title { display: block; font-weight: 600; font-size: 0.82rem; }
+.explainer-q { display: block; font-size: 0.72rem; opacity: 0.7; margin-top: 0.15rem; }
+
+.detail .kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.64rem;
+  opacity: 0.55;
+  margin: 0 0 0.2rem;
+}
+.detail .question { font-size: 0.84rem; opacity: 0.85; margin: 0.2rem 0 0.4rem; }
+.detail .summary { font-size: 0.8rem; line-height: 1.5; margin: 0 0 0.8rem; }
+.detail ol.claims { margin: 0.3rem 0 0.8rem; padding-left: 1.1rem; }
+.detail .claim { margin-bottom: 0.7rem; }
+.detail .claim-text { margin: 0 0 0.25rem; font-size: 0.8rem; line-height: 1.45; }
+/* A quoted claim uses the source's own wording, so it is marked as such
+   rather than presented as the project's paraphrase. */
+.detail .claim-text.quoted {
+  border-left: 2px solid rgba(255, 255, 255, 0.22);
+  padding-left: 0.5rem;
+  font-style: italic;
+}
+.detail ul.legal, .detail ul.unverified {
+  margin: 0.25rem 0 0.8rem;
+  padding-left: 1.1rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.detail ul.unverified li { opacity: 0.78; margin-bottom: 0.35rem; }

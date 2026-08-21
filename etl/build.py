@@ -549,6 +549,35 @@ def build_incidents(localities) -> dict:
     }
 
 
+def write_explainers() -> int:
+    """Publish the mechanism explainers, citations hoisted like every layer.
+
+    Explainers are prose, not features, so they do not go through
+    `write_layer`. They obey the same rule regardless: each claim's evidence is
+    registered in the shared table and replaced by refs, so a claim whose
+    citation does not resolve fails the same test a feature would.
+    """
+    from .explainers import build as build_explainers
+    from .schema import _evidence_id
+
+    out = []
+    for ex in build_explainers():
+        claims = []
+        for c in ex["claims"]:
+            refs = []
+            for ev in c.pop("evidence", []):
+                eid = _evidence_id(ev)
+                EVIDENCE_TABLE.setdefault(eid, ev)
+                refs.append(eid)
+            claims.append({**c, "evidence_ref": refs})
+        out.append({**ex, "claims": claims})
+
+    write_json(PROCESSED / "explainers.json", {"explainers": out})
+    n_claims = sum(len(e["claims"]) for e in out)
+    print(f"[expl] explainers.json written ({len(out)} explainers, {n_claims} cited claims)")
+    return len(out)
+
+
 def _build_id() -> str:
     """A short hash of the published data.
 
@@ -621,6 +650,7 @@ def main(argv: list[str]) -> int:
     if cmd == "refresh-urls":
         return refresh_urls()
 
+    stats["explainers"] = write_explainers()
     write_meta(stats)
     print("\nDone. Serve with:  python -m http.server -d web 8000")
     return 0
