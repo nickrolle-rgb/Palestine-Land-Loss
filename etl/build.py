@@ -149,6 +149,35 @@ def build_base() -> dict:
     west_bank_km2 = sum(geometry_area_m2(f["geometry"]) for f in oslo) / 1e6
     print(f"[base] West Bank area computed from Oslo polygons: {west_bank_km2:,.0f} km2")
 
+    # Per-class shares, measured here from the source polygons rather than the
+    # simplified ones that get published, and rather than being quoted. This is
+    # the figure the map's Oslo legend states, and the distinction it rests on —
+    # A is Palestinian civil *and* security control, B is civil control only —
+    # is the one OCHA's own file loses by labelling both 'A'. See
+    # docs/corrections.md.
+    _by_class: dict[str, float] = {}
+    _parts: dict[str, int] = {}
+    for f in oslo:
+        cls = f["properties"]["oslo_class"]
+        _by_class[cls] = _by_class.get(cls, 0.0) + geometry_area_m2(f["geometry"])
+        g = f["geometry"]
+        # Counted here, from the source geometry, for the same reason areas are:
+        # simplification drops the smallest rings, and the smallest rings are
+        # precisely what makes the point about fragmentation.
+        _parts[cls] = _parts.get(cls, 0) + (
+            len(g["coordinates"]) if g["type"] == "MultiPolygon" else 1
+        )
+    oslo_shares = {
+        cls: {
+            "km2": round(m2 / 1e6, 1),
+            "pct": round(100 * m2 / (west_bank_km2 * 1e6), 2),
+            "parts": _parts[cls],
+        }
+        for cls, m2 in sorted(_by_class.items(), key=lambda kv: -kv[1])
+    }
+    for cls, v in oslo_shares.items():
+        print(f"       {cls:34} {v['km2']:8,.1f} km2  {v['pct']:6.2f}%")
+
     print("[bts]  B'Tselem settlement boundaries and outposts")
     bts_entities, bts_stats = btselem.load_boundaries()
     print(f"       {bts_stats['total']} entities: "
@@ -454,6 +483,7 @@ def build_base() -> dict:
         "btselem_entities": bts_stats,
         "municipal_stats": muni_stats,
         "west_bank_km2": round(west_bank_km2, 1),
+        "oslo_shares": oslo_shares,
         "land_measures": land_measures,
         "coverage": coverage,
         "timeline": timeline,

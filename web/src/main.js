@@ -1,6 +1,6 @@
 import {
   BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
-  BASEMAP_PLACE_LABELS, MANDATE_COLOUR, MECHANISM_STYLE, OSLO_COLOURS,
+  BASEMAP_PLACE_LABELS, MANDATE_COLOUR, MECHANISM_STYLE, OSLO_CLASSES, OSLO_COLOURS,
   OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
@@ -885,12 +885,56 @@ function buildContextToggles(map) {
       id: r.id, colour: r.colour, label: r.label, definition: r.definition,
       checked: false, disabled: empty, note: empty ? "no data" : "",
     });
+    const legend = r.id === "oslo" ? osloLegend() : null;
     row.querySelector("input").addEventListener("change", (e) => {
       const vis = e.target.checked ? "visible" : "none";
       r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
+      if (legend) legend.hidden = !e.target.checked;
     });
     host.appendChild(row);
+    if (legend) host.appendChild(legend);
   }
+}
+
+// The Oslo classes with their share of the West Bank and what each means for
+// control. Without this the layer is eight colours and no argument: the widely
+// quoted "40% of the West Bank" is A and B added together, and B is Palestinian
+// civil control under Israeli security control, which is not the same claim.
+function osloLegend() {
+  const shares = (state.meta && state.meta.stats && state.meta.stats.oslo_shares) || {};
+  const el = document.createElement("div");
+  el.className = "oslo-legend";
+  el.hidden = true;
+  el.innerHTML = OSLO_CLASSES.map((c) => {
+    const s = shares[c.id];
+    return `<div class="oslo-class">
+      <span class="swatch" style="background:${c.colour}"></span>
+      <span class="oslo-name">${c.id}</span>
+      <span class="oslo-pct">${s ? s.pct.toFixed(2) + "%" : "—"}</span>
+      <span class="oslo-meaning">${c.meaning}</span>
+    </div>`;
+  }).join("");
+
+  const a = shares.A, b = shares.B, c = shares.C;
+  if (a && b) {
+    el.innerHTML += `<p class="oslo-note">
+      Areas A and B together are ${(a.pct + b.pct).toFixed(2)}% of the West Bank —
+      the figure usually quoted as "40%", which counts this file's separately
+      classed Nature Reserve, East Jerusalem and No Man's Land inside A, B and C.
+      Full Palestinian civil <em>and</em> security control is Area A alone:
+      <strong>${a.pct.toFixed(2)}%</strong>.
+    </p>`;
+    if (a.parts && b.parts && c && c.parts) {
+      el.innerHTML += `<p class="oslo-note">
+        Shape matters as much as share. Measured from the source polygons,
+        Area A is <strong>${a.parts}</strong> separate pieces and Area B is
+        <strong>${b.parts}</strong>, while Area C is
+        ${c.parts === 1 ? "a single contiguous polygon wrapped around them"
+                        : `${c.parts} pieces`}.
+      </p>`;
+    }
+  }
+  return el;
 }
 
 function buildHistoricalToggles(map) {

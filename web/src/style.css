@@ -301,3 +301,40 @@ details.block > summary:hover h2, details.block > summary:focus-visible h2 { col
   font-size: 10px; color: var(--ink-dim); margin-top: 2px;
   padding: 0 46px 0 62px; letter-spacing: .03em;
 }
+
+/* Oslo class legend — shown only while the Oslo layer is on. Each row states
+   the class, its measured share of the West Bank and what it means for
+   control, because the colour alone cannot carry the A/B distinction. */
+.oslo-legend {
+  margin: 0.35rem 0 0.6rem 1.55rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+.oslo-legend[hidden] { display: none; }
+.oslo-class {
+  display: grid;
+  grid-template-columns: 0.75rem 2.6rem 3.2rem 1fr;
+  gap: 0.4rem;
+  align-items: baseline;
+  margin-bottom: 0.28rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+.oslo-class .swatch {
+  width: 0.7rem; height: 0.7rem;
+  border-radius: 2px;
+  align-self: center;
+}
+.oslo-name { font-weight: 600; }
+.oslo-pct { font-variant-numeric: tabular-nums; text-align: right; opacity: 0.85; }
+.oslo-meaning { opacity: 0.72; }
+/* The long class names wrap rather than forcing the panel wider. */
+.oslo-class:nth-child(n + 6) { grid-template-columns: 0.75rem 1fr; }
+.oslo-class:nth-child(n + 6) .oslo-pct,
+.oslo-class:nth-child(n + 6) .oslo-meaning { grid-column: 2; text-align: left; }
+.oslo-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.71rem;
+  line-height: 1.45;
+  opacity: 0.78;
+}

@@ -129,15 +129,36 @@ export const EXTENT_STYLE = {
   regional_council: { colour: "#a16207", label: "Regional council jurisdiction" },
 };
 
-export const OSLO_COLOURS = {
-  A: "#10b981",
-  B: "#14b8a6",
-  C: "#64748b",
-  H1: "#22c55e",
-  H2: "#f97316",
-  "Nature Reserve": "#4d7c0f",
-  "Israeli Declared East Jerusalem": "#7c3aed",
-  "No Man's Land": "#475569",
-};
+// The Oslo classes, with what each one actually means for control on the
+// ground. The classification is the most misread thing on this map: "40% of the
+// West Bank is Palestinian" is Areas A and B added together, but B is civil
+// control with Israeli security control, which is a different thing from A. The
+// legend states the distinction rather than leaving it to the colour.
+//
+// A and B are deliberately far apart in hue. They were near-identical greens
+// while our data wrongly labelled both 'A' (docs/corrections.md); now that they
+// are distinct in the data, the difference has to survive being looked at.
+export const OSLO_CLASSES = [
+  { id: "A", colour: "#10b981",
+    meaning: "Palestinian civil and security control" },
+  { id: "B", colour: "#a3e635",
+    meaning: "Palestinian civil control; Israeli security control" },
+  { id: "C", colour: "#64748b",
+    meaning: "Israeli civil and security control" },
+  { id: "H1", colour: "#22c55e",
+    meaning: "Hebron — Palestinian control (1997 Protocol)" },
+  { id: "H2", colour: "#f97316",
+    meaning: "Hebron — Israeli security control" },
+  { id: "Nature Reserve", colour: "#4d7c0f",
+    meaning: "Declared reserve; a separate class in the source" },
+  { id: "Israeli Declared East Jerusalem", colour: "#7c3aed",
+    meaning: "Unilaterally annexed 1980; annexation held void by UNSC 478" },
+  { id: "No Man's Land", colour: "#475569",
+    meaning: "Unallocated under the 1949 armistice" },
+];
+
+export const OSLO_COLOURS = Object.fromEntries(
+  OSLO_CLASSES.map((c) => [c.id, c.colour]),
+);
 
 export const TIME = { min: 1945, max: 2026 };
