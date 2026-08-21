@@ -642,3 +642,63 @@ class ExplainersAreCited(unittest.TestCase):
                     self.assertIn(sid, SOURCES, f"{ex['id']} cites unregistered source {sid}")
                     self.assertTrue(getattr(SOURCES[sid], "enabled", True),
                                     f"{ex['id']} cites disabled source {sid}")
+
+
+class GazaLayersStateTheirAge(unittest.TestCase):
+    """Rule 1, applied to currency: a 2019 outline is not a claim about now.
+
+    Publishing pre-war administrative geography is legitimate and useful. Doing
+    it without saying so would let a reader take these outlines for the Gaza
+    that exists, which would be our error rather than the source's.
+    """
+
+    LAYERS = ("gaza_municipal.geojson", "gaza_neighbourhoods.geojson")
+
+    def test_every_feature_carries_a_currency_note(self):
+        for name in self.LAYERS:
+            for f in load(name)["features"]:
+                note = f["properties"].get("currency_note", "")
+                self.assertIn("2019", note, f"{name}: feature without a dated caveat")
+
+    def test_evidence_document_date_matches_the_caveat(self):
+        table = load("meta.json")["evidence"]
+        for name in self.LAYERS:
+            for f in load(name)["features"]:
+                for r in f["properties"].get("evidence_ref", []):
+                    self.assertEqual(table[r].get("document_date"), "2019-07-18",
+                                     f"{name}: evidence date disagrees with the caveat")
+
+    def test_blank_source_fields_are_absent_not_empty(self):
+        # 111 of 149 neighbourhood points carry no district or community. They
+        # must be missing, never an empty string that renders as a value.
+        for f in load("gaza_neighbourhoods.geojson")["features"]:
+            for key in ("district", "community", "arabic", "pcode"):
+                if key in f["properties"]:
+                    self.assertTrue(str(f["properties"][key]).strip(),
+                                    f"empty {key} shipped instead of being omitted")
+
+    def test_unnamed_municipalities_are_flagged_not_invented(self):
+        feats = load("gaza_municipal.geojson")["features"]
+        for f in feats:
+            p = f["properties"]
+            if not p.get("named"):
+                self.assertEqual(p["name"], "Unnamed municipality",
+                                 "an unnamed polygon must say so, never be guessed")
+
+
+    def test_neighbourhoods_fall_inside_the_municipal_boundaries(self):
+        """Two independently published Gaza layers must agree geometrically.
+
+        They come from separate shapefiles with no shared key beyond PCODE, so
+        this is a real cross-check on projection and coordinate handling rather
+        than a tautology: a CRS slip in either would show up here immediately.
+        """
+        from etl.geo import point_in_polygon
+        muni = load("gaza_municipal.geojson")["features"]
+        outside = [
+            f["properties"]["name"]
+            for f in load("gaza_neighbourhoods.geojson")["features"]
+            if not any(point_in_polygon(tuple(f["geometry"]["coordinates"]),
+                                        m["geometry"]) for m in muni)
+        ]
+        self.assertEqual(outside, [], f"{len(outside)} neighbourhoods outside every municipality")

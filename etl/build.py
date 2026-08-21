@@ -19,6 +19,7 @@ from datetime import date
 
 from .adapters import alhaq as alhaq_adapter
 from .adapters import btselem
+from .adapters import gaza as gaza_adapter
 from .adapters import historical
 from .adapters import ocha
 from .adapters import ocha_violence
@@ -283,6 +284,28 @@ def build_base() -> dict:
         _simplify_features([feature(f["geometry"], f["properties"]) for f in villages]),
     )
 
+    print("[gaza] Gaza Strip base geography")
+    gaza_muni = gaza_adapter.load_municipal_boundaries()
+    gaza_nbhd, gaza_stats = gaza_adapter.load_neighbourhoods()
+    gaza_named = sum(1 for f in gaza_muni if f["properties"]["named"])
+    print(f"       {len(gaza_muni)} municipal boundaries ({gaza_named} named, "
+          f"{len(gaza_muni) - gaza_named} unnamed in the source)")
+    print(f"       {gaza_stats['total']} neighbourhood points | "
+          f"{gaza_stats['with_district']} with a district, "
+          f"{gaza_stats['with_arabic']} with Arabic")
+    print(f"       both dated 2019-07-18 — pre-October-2023 administrative geography")
+
+    write_layer(
+        "gaza_municipal.geojson",
+        _simplify_features([feature(f["geometry"], f["properties"]) for f in gaza_muni]),
+        note=gaza_adapter.GAZA_CURRENCY,
+    )
+    write_layer(
+        "gaza_neighbourhoods.geojson",
+        [feature(f["geometry"], f["properties"]) for f in gaza_nbhd],
+        note=gaza_adapter.GAZA_CURRENCY,
+    )
+
     print("[base] resource destruction (Masafer Yatta)")
     from .adapters.alhaq import Gazetteer
     gaz = Gazetteer(localities)
@@ -477,6 +500,8 @@ def build_base() -> dict:
         "firing_zones": len(firing),
         "firing_zones_km2": round(firing_km2, 1),
         "village_boundaries": len(villages),
+        "gaza_municipal": len(gaza_muni),
+        "gaza_neighbourhoods": gaza_stats,
         "locality_merge": {k: v for k, v in merge_stats.items() if not k.endswith("_detail")},
         "depopulated_1948": len(depop),
         "mandate_boundary": bool(mandate),

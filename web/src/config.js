@@ -164,4 +164,15 @@ export const OSLO_COLOURS = Object.fromEntries(
   OSLO_CLASSES.map((c) => [c.id, c.colour]),
 );
 
+// Gaza base geography. Deliberately not in the settlement palette: these are
+// administrative outlines, not a measure of anything taken, and colouring them
+// like a loss layer would assert something the source cannot support.
+export const GAZA_STYLE = {
+  gaza_municipal: { colour: "#38bdf8", label: "Municipal boundaries", count: 33 },
+  gaza_neighbourhoods: { colour: "#7dd3fc", label: "Neighbourhoods", count: 149 },
+};
+
+//: Gaza Strip bounding box, for the zoom control.
+export const GAZA_BOUNDS = [[34.19, 31.20], [34.58, 31.61]];
+
 export const TIME = { min: 1945, max: 2026 };

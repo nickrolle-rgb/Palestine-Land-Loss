@@ -292,3 +292,26 @@ Declared East Jerusalem (1.22%) and No Man's Land (0.88%) out into their own
 classes rather than folding them in — which is the correct behaviour under
 non-negotiable 3, and they are **not** folded back to make the totals match.
 Asserted by `tests/test_invariants.py::OsloClassesAreDisambiguated`.
+
+## OCHA's Gaza neighbourhoods file spells its community field `Communithy`
+
+**Source:** `gazastrip_neighbourhoods_points.zip`, State of Palestine — Gaza
+Strip Neighbourhoods, document date 2019-07-18.
+
+**The quirk:** the attribute is `Communithy`, not `Community`. Normalised at
+ingest in `etl/adapters/gaza.py` and never propagated — the same treatment as
+OCHA's literal `West Bsnk` typo.
+
+**Also:** 111 of the 149 points carry an empty `DISTRICT` and an empty
+`Communithy`, and 18 carry no Arabic name. Blank strings are dropped rather
+than shipped, so a missing district is *absent* from the feature instead of
+rendering as an empty value in the detail panel. Nothing is inferred from
+neighbouring points, and `tests/test_invariants.py::GazaLayersStateTheirAge`
+fails the build if an empty string ever ships.
+
+**Currency, which matters more than either:** both Gaza layers are dated
+2019-07-18. They describe how the Strip was administratively divided before
+October 2023, not what still stands. Every feature carries that caveat, the
+panel section states it, and a test asserts the caveat and the evidence date
+agree. Publishing pre-war geography is useful; publishing it silently would
+mislead, and that would be our fault rather than the source's.

@@ -249,6 +249,31 @@ HDX_RESOURCES: list[HdxResource] = [
         description="Oslo classification: Area A, C, H1, H2, Nature Reserve, "
                     "Israeli Declared East Jerusalem, No Man's Land.",
     ),
+    # --- Gaza -------------------------------------------------------------
+    # Both are dated 2019-07-18 and describe Gaza as it was administratively
+    # defined before October 2023. They are not a picture of Gaza now, and the
+    # UI says so on the layer rather than in a footnote. Damage assessment is a
+    # separate question needing a separate source.
+    HdxResource(
+        key="gaza_municipal",
+        source_id="ocha_opt",
+        url="https://data.humdata.org/dataset/6b79f7ab-9e13-48e5-9f58-dc45b4a9222c/resource/f131956a-8cc6-424c-a831-5b8b0d6956b9/download/gazastrip_municipalboundaries.zip",
+        filename="gazastrip_municipalboundaries.zip",
+        shapefile_base="GazaStrip_MunicipalBoundaries",
+        source_crs="EPSG:4326",
+        description="33 Gaza Strip municipal boundaries (CC BY, dated 2019-07-18).",
+    ),
+    HdxResource(
+        key="gaza_neighbourhoods",
+        source_id="ocha_opt",
+        url="https://data.humdata.org/dataset/0e62a5ad-372f-4f99-96b8-54785201211f/resource/098d8e9f-3ae2-4ed9-b6f7-29ab429106f3/download/gazastrip_neighbourhoods_points.zip",
+        filename="gazastrip_neighbourhoods_points.zip",
+        shapefile_base="GazaStrip_Neighbourhoods_points",
+        source_crs="EPSG:4326",
+        description="149 Gaza neighbourhood points (CC BY, dated 2019-07-18). "
+                    "111 of them carry no district or community value in the "
+                    "source; those fields are omitted rather than inferred.",
+    ),
     HdxResource(
         key="communities",
         source_id="ocha_opt",

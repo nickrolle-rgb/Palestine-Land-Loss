@@ -1,6 +1,7 @@
 import {
   BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
-  BASEMAP_PLACE_LABELS, MANDATE_COLOUR, MECHANISM_STYLE, OSLO_CLASSES, OSLO_COLOURS,
+  BASEMAP_PLACE_LABELS, GAZA_BOUNDS, GAZA_STYLE, MANDATE_COLOUR, MECHANISM_STYLE,
+  OSLO_CLASSES, OSLO_COLOURS,
   OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
@@ -51,6 +52,8 @@ async function loadAll() {
     localities: "localities.geojson",
     oslo: "oslo_areas.geojson",
     explainers: "explainers.json",
+    gaza_municipal: "gaza_municipal.geojson",
+    gaza_neighbourhoods: "gaza_neighbourhoods.geojson",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -865,6 +868,75 @@ function buildMechanismToggles(map) {
   }
 }
 
+// Gaza's administrative geography, drawn in its own blue rather than the
+// settlement palette. These outlines measure nothing that was taken; they say
+// how the Strip was divided as at 2019, and the caveat rides on the section
+// rather than hiding in a detail panel.
+function addGazaLayers(map) {
+  map.addSource("gaza_municipal", { type: "geojson", data: state.data.gaza_municipal });
+  map.addLayer({
+    id: "gaza-municipal-fill", type: "fill", source: "gaza_municipal",
+    layout: { visibility: "none" },
+    paint: { "fill-color": GAZA_STYLE.gaza_municipal.colour, "fill-opacity": 0.12 },
+  });
+  map.addLayer({
+    id: "gaza-municipal-line", type: "line", source: "gaza_municipal",
+    layout: { visibility: "none" },
+    paint: { "line-color": GAZA_STYLE.gaza_municipal.colour, "line-width": 1 },
+  });
+
+  map.addSource("gaza_neighbourhoods", { type: "geojson", data: state.data.gaza_neighbourhoods });
+  map.addLayer({
+    id: "gaza-neighbourhoods", type: "circle", source: "gaza_neighbourhoods",
+    layout: { visibility: "none" },
+    paint: {
+      "circle-radius": 3.5,
+      "circle-color": GAZA_STYLE.gaza_neighbourhoods.colour,
+      "circle-stroke-width": 0.6,
+      "circle-stroke-color": "rgba(0,0,0,0.5)",
+    },
+  });
+}
+
+function buildGazaToggles(map) {
+  const host = document.getElementById("gaza-toggles");
+  if (!host) return;
+  const note = document.getElementById("gaza-currency");
+  const feats = (state.data.gaza_municipal && state.data.gaza_municipal.features) || [];
+  const currency = feats.length ? feats[0].properties.currency_note : null;
+  if (note) {
+    note.textContent = currency
+      || "Gaza layers unavailable in this build.";
+  }
+
+  const rows = [
+    { id: "gaza_municipal", layers: ["gaza-municipal-fill", "gaza-municipal-line"] },
+    { id: "gaza_neighbourhoods", layers: ["gaza-neighbourhoods"] },
+  ];
+  for (const r of rows) {
+    const style = GAZA_STYLE[r.id];
+    const data = state.data[r.id];
+    const n = (data && data.features && data.features.length) || 0;
+    const row = toggleRow({
+      id: r.id, colour: style.colour,
+      label: `${style.label} (${n})`,
+      checked: false, disabled: n === 0, note: n === 0 ? "no data" : "",
+    });
+    row.querySelector("input").addEventListener("change", (e) => {
+      const vis = e.target.checked ? "visible" : "none";
+      r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
+    });
+    host.appendChild(row);
+  }
+
+  const zoom = document.getElementById("gaza-zoom");
+  if (zoom) {
+    zoom.addEventListener("click", () => {
+      map.fitBounds(GAZA_BOUNDS, { padding: 40, duration: 900 });
+    });
+  }
+}
+
 function buildExplainers() {
   const host = document.getElementById("explainer-list");
   if (!host) return;
@@ -1212,11 +1284,13 @@ async function init() {
     addResourceLayers(map);
     addHistoricalDataLayers(map);
     addSettlementLayers(map);
+    addGazaLayers(map);
 
     if (!uiBuilt) {
       buildExtentToggles(map);
       buildMechanismToggles(map);
       buildContextToggles(map);
+      buildGazaToggles(map);
       buildExplainers();
       buildHistoricalToggles(map);
       buildIncidentToggles(map);
