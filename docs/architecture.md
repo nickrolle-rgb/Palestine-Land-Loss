@@ -184,7 +184,24 @@ The fix is the standard one, and it solves both problems at once:
 - `vercel.json` serves `/public/data/*` as `max-age=31536000, immutable`, and
   `meta.json` alone as `must-revalidate`.
 
-A repeat visitor therefore makes **one** conditional request — for `meta.json` —
-and serves every data file from cache. When the data genuinely changes the hash
-changes, the URLs change, and the browser fetches the new files. Correctness and
-frugality stop being in tension, which is what the first attempt got wrong.
+A repeat visitor therefore makes a handful of conditional requests — the HTML,
+`meta.json` and the source modules — and serves every data file from cache. When
+the data genuinely changes the hash changes, the URLs change, and the browser
+fetches the new files.
+
+**Two ordering traps, both found live rather than by reading the config.**
+
+Vercel applies the **last** matching header rule, not the most specific one. The
+`meta.json` rule was written first and the `/public/data/(.*)` catch-all second,
+so the catch-all won and `meta.json` was served `immutable` for a year. That is
+worse than the bug the versioning was built to fix: a returning visitor's
+`build_id` could never change, so the versioned data URLs could never change, so
+the map could never update at all. The specific rule now comes **last**.
+
+And `/src/(.*)` is deliberately `max-age=0, must-revalidate` rather than cached
+for an hour. Source modules are not content-versioned — `main.js` imports
+`./config.js` with a bare specifier, and versioning ES module graphs needs a
+build step this project does not have. An hour of staleness there means a
+deploy that visibly does nothing, which is indistinguishable from a broken
+deploy and cost real debugging time twice. Five conditional requests per repeat
+visit is a cheap price for a deploy that is actually visible.
