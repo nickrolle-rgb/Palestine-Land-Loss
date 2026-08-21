@@ -323,6 +323,11 @@ def build_base() -> dict:
         _simplify_features([feature(f["geometry"], f["properties"]) for f in damage_feats]),
     )
 
+    damage_points, damage_timeline_stats = unosat_adapter.damage_timeline()
+    print(f"       timeline: {damage_timeline_stats['rounds']} assessment rounds, "
+          f"{damage_timeline_stats['first_date']} to {damage_timeline_stats['last_date']} "
+          f"({damage_points[0]['sites_assessed']:,} -> {damage_points[-1]['sites_assessed']:,} sites)")
+
     print("[prcs] Palestine Red Crescent Society facilities")
     prcs_feats, prcs_stats = prcs_adapter.load_facilities()
     print(f"       {prcs_stats['plotted']} plotted, {prcs_stats['withheld']} withheld "
@@ -530,7 +535,8 @@ def build_base() -> dict:
         "village_boundaries": len(villages),
         "gaza_municipal": len(gaza_muni),
         "prcs": {k: v for k, v in prcs_stats.items() if k != "withheld_names"},
-        "gaza_damage": damage_stats,
+        "gaza_damage": {**damage_stats, "timeline": damage_points,
+                        "timeline_meta": damage_timeline_stats},
         "gaza_neighbourhoods": gaza_stats,
         "locality_merge": {k: v for k, v in merge_stats.items() if not k.endswith("_detail")},
         "depopulated_1948": len(depop),

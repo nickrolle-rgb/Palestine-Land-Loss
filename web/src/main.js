@@ -986,9 +986,7 @@ function buildGazaToggles(map) {
   }
 }
 
-// A choropleth without a scale is decoration. Lighter means more here, which
-// is the opposite of most readers' instinct, so the legend says it in words
-// rather than leaving the ramp to be guessed at.
+// A choropleth without a scale is decoration.
 function damageRampLegend(feats) {
   const el = document.createElement("div");
   el.className = "oslo-legend";
@@ -1009,7 +1007,7 @@ function damageRampLegend(feats) {
   }).join("");
 
   el.innerHTML += `<p class="oslo-note">
-    Lighter is more. ${total.toLocaleString()} assessed sites across
+    Darker is more. ${total.toLocaleString()} assessed sites across
     ${feats.length} municipalities; the highest is
     ${worst ? worst.properties.name : "—"} at
     ${worst ? worst.properties.damage_sites.toLocaleString() : "—"}.
@@ -1019,6 +1017,26 @@ function damageRampLegend(feats) {
     names against OCHA's — those agree only 82.5% of the time, so a name join
     would have misfiled roughly one site in six.
   </p>`;
+
+  // Fourteen assessment rounds, two years. The bars are the argument: this did
+  // not happen at a moment, it accumulated.
+  const tl = ((state.meta || {}).stats || {}).gaza_damage;
+  const points = tl && tl.timeline;
+  if (points && points.length) {
+    const max = points[points.length - 1].sites_assessed;
+    el.innerHTML += `<p class="oslo-note" style="margin-bottom:.35rem">
+      Assessed damage over ${points.length} rounds, ${points[0].date} to
+      ${points[points.length - 1].date}:</p>
+      <div class="damage-timeline">` +
+      points.map((p) => `<div class="dt-row">
+        <span class="dt-date">${p.date}</span>
+        <span class="dt-bar"><i style="width:${(100 * p.sites_assessed / max).toFixed(1)}%"></i></span>
+        <span class="dt-n">${p.sites_assessed.toLocaleString()}</span>
+      </div>`).join("") + `</div>
+      <p class="oslo-note">Each point is sites <em>assessed as damaged as at that
+      date</em>, not buildings destroyed on it. UNOSAT's per-round status codes
+      are undocumented in the file and are deliberately not interpreted.</p>`;
+  }
   return el;
 }
 

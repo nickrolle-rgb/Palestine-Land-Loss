@@ -96,6 +96,83 @@ def _open_layer() -> tuple[list[tuple[float, float]], list[str | None]]:
     return coords, labels
 
 
+#: The assessment carries fourteen rounds. Each has a sensor date and, per
+#: site, a damage class where the site was classified in that round.
+ROUNDS = range(1, 15)
+
+
+def _round_columns() -> list[str]:
+    cols = ["Main_Damage_Site_Class", "SensorDate"]
+    for i in ROUNDS:
+        if i == 1:
+            continue
+        cols += [f"Main_Damage_Site_Class_{i}", f"SensorDate_{i}"]
+    return cols
+
+
+def damage_timeline() -> tuple[list[dict[str, Any]], dict]:
+    """Cumulative assessed damage at each of UNOSAT's fourteen sensor dates.
+
+    What this counts, exactly: the number of sites carrying a damage class in
+    round *n*. Those totals rise monotonically across the rounds, which is what
+    a cumulative record of assessed damage looks like.
+
+    What it deliberately does **not** do is interpret `Damage_Status`, whose
+    values (0, 1, 3) are not decoded anywhere in the file. Building a timeline
+    on guessed status codes would be inventing a finding, and the round dates
+    and damage classes are unambiguous without them.
+
+    Each point is therefore "sites assessed as damaged as at this date", not
+    "buildings destroyed on this date". The distinction is stated in the UI.
+    """
+    import collections
+
+    import pyogrio  # noqa: PLC0415
+    from pyogrio.raw import read as ogr_read
+
+    r = resource("unosat_gaza_damage")
+    path = download(r.url, r.filename)
+    with zipfile.ZipFile(path) as zf:
+        gdb = sorted({n.split("/")[0] for n in zf.namelist() if ".gdb/" in n})[0]
+    vsi = f"/vsizip/{Path(path).as_posix()}/{gdb}"
+    layer = [n for n, _ in pyogrio.list_layers(vsi) if n.startswith("Damage_Sites")][0]
+
+    meta, _, _, fields = ogr_read(
+        vsi, layer=layer, columns=_round_columns(), read_geometry=False
+    )
+    data = dict(zip(meta["fields"], fields))
+
+    points = []
+    ambiguous_dates = 0
+    for i in ROUNDS:
+        cls_col = "Main_Damage_Site_Class" if i == 1 else f"Main_Damage_Site_Class_{i}"
+        date_col = "SensorDate" if i == 1 else f"SensorDate_{i}"
+        if cls_col not in data or date_col not in data:
+            continue
+        classes = data[cls_col]
+        dates = [str(d)[:10] for d in data[date_col]]
+
+        assessed = sum(1 for c in classes if str(c) not in ("nan", "None", ""))
+        # One sensor date can span a couple of days of imagery. The modal date
+        # is the round's date; anything else is noted rather than hidden.
+        real = collections.Counter(d for d in dates if d and d != "NaT")
+        if not real:
+            continue
+        date, _ = real.most_common(1)[0]
+        if len(real) > 1:
+            ambiguous_dates += 1
+        points.append({"round": i, "date": date, "sites_assessed": assessed})
+
+    points.sort(key=lambda p: p["date"])
+    stats = {
+        "rounds": len(points),
+        "first_date": points[0]["date"] if points else None,
+        "last_date": points[-1]["date"] if points else None,
+        "rounds_with_mixed_dates": ambiguous_dates,
+    }
+    return points, stats
+
+
 def damage_by_municipality(municipal: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict]:
     """Count assessed damage sites inside each municipal polygon."""
     from ..geo import bounds_of, point_in_polygon

@@ -176,13 +176,15 @@ export const GAZA_STYLE = {
 // Gaza building damage. An ash ramp, deliberately outside the red/amber family
 // every "land taken" layer uses, because destruction is a different mechanism
 // (non-negotiable 11): people live among this rubble and the ground is not lost.
-// Light-on-dark so the ramp reads against the basemap.
+// Darker is more, which is the way nearly everyone reads a choropleth. The
+// first version ran light-for-more and had to be explained in words; a scale
+// that needs explaining is a scale that will be misread.
 export const DAMAGE_RAMP = [
-  [0, "#3f3f46"],
-  [2000, "#78716c"],
+  [0, "#f5f5f4"],
+  [2000, "#d6d3d1"],
   [8000, "#a8a29e"],
-  [20000, "#d6d3d1"],
-  [45000, "#f5f5f4"],
+  [20000, "#78716c"],
+  [45000, "#292524"],
 ];
 
 // Palestine Red Crescent Society facilities. Red-cross red is deliberate and

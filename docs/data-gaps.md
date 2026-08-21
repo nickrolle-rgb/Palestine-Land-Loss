@@ -452,7 +452,22 @@ released them publicly.
 The only OCHA buffer geodata is **Gaza Strip Buffer Area** (CC BY), last updated
 **2023-10-19** — the early-war perimeter buffer, not the current line.
 
-So this is a gap no licensing decision can close. The percentage is citable
-prose; the extent is not mappable from anything public. Recorded here rather
-than approximated, because a hand-drawn line across Gaza would be
+**Searched exhaustively on 2026-08-21**: all 254 Palestine-tagged datasets on
+HDX, across every publisher rather than just OCHA oPt. There is no
+access-restriction geometry as open data anywhere on it.
+
+So this is a gap no licensing decision can close. The extent is not mappable
+from anything public, and a hand-drawn line across Gaza would be
 non-negotiable 2 at its worst.
+
+**What we do instead:** the restriction is depicted as an explainer rather than
+a polygon — `gaza_yellow_line` in `etl/explainers.py`. OCHA's 19 June 2026
+situation report is quoted directly on what the line is and that it has been
+expanded repeatedly, and the missing geometry is stated as an open question
+rather than left as a silence. Territory Palestinians cannot enter is therefore
+on the map as a sourced, dated fact, without a single invented coordinate.
+
+**Not asserted:** the widely repeated 64.9% figure. It does not appear in the
+OCHA report cited, and no OCHA document stating it could be read directly — the
+main UN site returns 403 and the situation report that discusses the line at
+length gives no percentage. It sits in the explainer's `unverified` list.

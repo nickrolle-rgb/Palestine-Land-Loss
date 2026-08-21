@@ -36,6 +36,15 @@ _OCHA_EJ = Evidence(
 )
 
 
+_OCHA_SITREP_JUN26 = Evidence(
+    source_id="ocha_opt",
+    title="Humanitarian Situation Report — 19 June 2026",
+    url="https://www.ochaopt.org/content/humanitarian-situation-report-19-june-2026",
+    document_date="2026-06-19",
+    retrieved=READ_ON,
+)
+
+
 @dataclass
 class Claim:
     text: str
@@ -127,6 +136,53 @@ EXPLAINERS: list[Explainer] = [
             "B'Tselem's planning-policy analysis, which would corroborate or "
             "correct the above. Their site returned HTTP 429 when read on "
             + READ_ON + "; retry rather than assume.",
+        ],
+    ),
+    Explainer(
+        id="gaza_yellow_line",
+        title="The Yellow Line, and why it is not on this map",
+        question="Which parts of Gaza can Palestinians not go to?",
+        summary=(
+            "There is territory in Gaza that Palestinians cannot enter, and this "
+            "map does not draw it — because nobody publishes where it is. The "
+            "restriction is real, dated and sourced; the boundary is not public. "
+            "Saying so is the only honest option: a line drawn by eye across Gaza "
+            "would be a guess presented as evidence."
+        ),
+        attaches_to="gaza",
+        claims=[
+            Claim(
+                "The Yellow Line marks the area within the Strip where access is "
+                "restricted by Israeli forces.",
+                [_OCHA_SITREP_JUN26], quote=True,
+            ),
+            Claim(
+                "It has been expanded multiple times through the placement of "
+                "yellow blocks.",
+                [_OCHA_SITREP_JUN26], quote=True,
+            ),
+            Claim(
+                "The UN Relief Chief describes an “ever-shrinking strip of land” "
+                "and “constantly shifting ‘yellow’ and ‘orange’ lines”.",
+                [_OCHA_SITREP_JUN26], quote=True,
+            ),
+        ],
+        unverified=[
+            "That the restricted zone reached 64.9% of the Gaza Strip by June "
+            "2026, up from about 53% at the October 2025 ceasefire. Very widely "
+            "repeated. It does not appear in the OCHA situation report cited "
+            "above, and no OCHA document stating it could be read directly, so "
+            "it is not asserted here.",
+            "That a further “Orange Line” covers roughly 36 km², about 10% more "
+            "of the Strip. Same position — repeated, not sourced to a document "
+            "this project could open.",
+            "Where either line actually runs. Israel's military shared the maps "
+            "with aid organisations in March 2026 and has not released them "
+            "publicly. Every Palestine dataset on HDX was searched across all "
+            "254 entries and all publishers; no access-restriction geometry "
+            "exists as open data. The only OCHA buffer layer, Gaza Strip Buffer "
+            "Area, was last updated 2023-10-19 and is the early-war perimeter, "
+            "not this line.",
         ],
     ),
 ]
