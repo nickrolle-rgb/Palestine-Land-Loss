@@ -275,6 +275,17 @@ HDX_RESOURCES: list[HdxResource] = [
                     "source; those fields are omitted rather than inferred.",
     ),
     HdxResource(
+        key="prcs_facilities",
+        source_id="ocha_opt",
+        url="https://data.humdata.org/dataset/c181df53-6143-4a32-a981-2247e40c7fb5/resource/204567f2-53d4-47c0-98af-a3f303461903/download/prcs.zip",
+        filename="prcs.zip",
+        shapefile_base="PRCS",
+        source_crs="EPSG:4326",
+        description="88 Palestine Red Crescent Society facilities across 16 "
+                    "districts — hospitals, EMS stations, clinics, branches. "
+                    "Two carry no coordinates and are withheld, not placed.",
+    ),
+    HdxResource(
         key="communities",
         source_id="ocha_opt",
         url="https://data.humdata.org/dataset/c7e2f4b3-6a74-4b98-b064-1e9c2d066242/resource/1936b09f-74a8-4d4d-b92b-2ee75abb21f1/download/palestiniancommunities_wb_gs.zip",

@@ -172,6 +172,10 @@ export const GAZA_STYLE = {
   gaza_neighbourhoods: { colour: "#7dd3fc", label: "Neighbourhoods", count: 149 },
 };
 
+// Palestine Red Crescent Society facilities. Red-cross red is deliberate and
+// is the one place on this map that colour denotes protection rather than loss.
+export const PRCS_STYLE = { colour: "#ef4444", label: "PRCS facilities" };
+
 //: Gaza Strip bounding box, for the zoom control.
 export const GAZA_BOUNDS = [[34.19, 31.20], [34.58, 31.61]];
 

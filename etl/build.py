@@ -20,6 +20,7 @@ from datetime import date
 from .adapters import alhaq as alhaq_adapter
 from .adapters import btselem
 from .adapters import gaza as gaza_adapter
+from .adapters import prcs as prcs_adapter
 from .adapters import historical
 from .adapters import ocha
 from .adapters import ocha_violence
@@ -306,6 +307,17 @@ def build_base() -> dict:
         note=gaza_adapter.GAZA_CURRENCY,
     )
 
+    print("[prcs] Palestine Red Crescent Society facilities")
+    prcs_feats, prcs_stats = prcs_adapter.load_facilities()
+    print(f"       {prcs_stats['plotted']} plotted, {prcs_stats['withheld']} withheld "
+          f"(no coordinates in the source)")
+    for nm in prcs_stats["withheld_names"]:
+        print(f"         withheld: {nm}")
+    write_layer(
+        "prcs_facilities.geojson",
+        [feature(f["geometry"], f["properties"]) for f in prcs_feats],
+    )
+
     print("[base] resource destruction (Masafer Yatta)")
     from .adapters.alhaq import Gazetteer
     gaz = Gazetteer(localities)
@@ -501,6 +513,7 @@ def build_base() -> dict:
         "firing_zones_km2": round(firing_km2, 1),
         "village_boundaries": len(villages),
         "gaza_municipal": len(gaza_muni),
+        "prcs": {k: v for k, v in prcs_stats.items() if k != "withheld_names"},
         "gaza_neighbourhoods": gaza_stats,
         "locality_merge": {k: v for k, v in merge_stats.items() if not k.endswith("_detail")},
         "depopulated_1948": len(depop),

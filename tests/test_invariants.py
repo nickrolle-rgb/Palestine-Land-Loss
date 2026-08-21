@@ -702,3 +702,38 @@ class GazaLayersStateTheirAge(unittest.TestCase):
                                         m["geometry"]) for m in muni)
         ]
         self.assertEqual(outside, [], f"{len(outside)} neighbourhoods outside every municipality")
+
+
+class PrcsFacilitiesAreNotGuessed(unittest.TestCase):
+    """Rule 2 on a source that ships null coordinates.
+
+    Two PRCS records carry -DBL_MAX in the shapefile and nan in the DBF. A
+    naive ingest plots them somewhere impossible; a helpful one invents a point
+    near the named town. Both are wrong, so they are withheld and counted.
+    """
+
+    def setUp(self):
+        self.feats = load("prcs_facilities.geojson")["features"]
+
+    def test_no_facility_sits_outside_valid_coordinates(self):
+        for f in self.feats:
+            lon, lat = f["geometry"]["coordinates"][:2]
+            self.assertTrue(-180 <= lon <= 180 and -90 <= lat <= 90,
+                            f"{f['properties']['name']} at {lon},{lat}")
+
+    def test_all_facilities_fall_within_historic_palestine(self):
+        for f in self.feats:
+            lon, lat = f["geometry"]["coordinates"][:2]
+            self.assertTrue(34.0 <= lon <= 36.0 and 29.0 <= lat <= 33.5,
+                            f"{f['properties']['name']} outside the region")
+
+    def test_withheld_count_is_published(self):
+        stats = load("meta.json")["stats"]["prcs"]
+        self.assertEqual(stats["total"], stats["plotted"] + stats["withheld"])
+        self.assertGreater(stats["withheld"], 0,
+                           "the source has unplaceable records; the count must be shown")
+
+    def test_category_spelling_is_normalised(self):
+        types = {f["properties"]["facility_type"] for f in self.feats}
+        self.assertNotIn("Sub Station", types,
+                         "the source's two spellings must be merged at ingest")

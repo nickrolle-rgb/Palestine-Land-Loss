@@ -47,6 +47,16 @@ look better is the worst possible trade.
    total overstates displacement by more than 2×.
 10. **Never hand-draw a historical boundary.** No GIS exists for late-Ottoman
     sanjaks; that is recorded as a gap, not filled in by eye.
+11. **Never treat destruction as dispossession.** A destroyed building is not
+    land taken. Tent camps stand among the rubble across Gaza and people are
+    living on that ground — labelling it prohibited, lost or stolen would
+    misdescribe their situation and erase the fact that they are still there.
+    Destruction, access restriction and territorial control are three separate
+    mechanisms measured three different ways, and their headline figures
+    (roughly 69%, 64.9% and 70%) are close enough to invite exactly this
+    mistake. Destruction data ships as its own layer, in its own styling, and
+    is never summed into a land-loss total.
+
 
 ## Conventions
 

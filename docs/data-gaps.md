@@ -385,3 +385,62 @@ ingest, from them or anyone, because the State does not publish one.
 would break non-negotiable 1. Recorded here so the absence is visible. If Kerem
 Navot's petition ever succeeds this becomes the single highest-value ingest in
 the project.
+
+## 15. Gaza destruction — the data exists and we cannot read it
+
+**UNOSAT** publish a Comprehensive Building Damage Assessment for the Gaza
+Strip, updated roughly quarterly. The most recent is **11 October 2025** (5.0 MB,
+published to HDX 2025-10-31). Their December 2024 assessment counted 170,812
+damaged or destroyed structures, about 69% of all structures in the Strip.
+
+**The licence is fine.** HDX records it as **CC BY-SA** — Attribution and
+ShareAlike, with *no* NonCommercial clause. That is an open licence, and it is
+less restrictive than the CC BY-NC-SA stated on UNOSAT's own hub page. The
+ShareAlike condition binds *adaptations*, not works merely aggregated alongside
+others, so publishing it as its own unmodified layer does not relicense the rest
+of this database. It would bite if UNOSAT data ever fed a derived figure — a
+`coverage.py` union or a combined percentage — so it must not.
+
+**The format is the blocker.** Every current product ships only as an Esri File
+Geodatabase (`.gdb`). This pipeline is deliberately GDAL-free (`pyshp` +
+`pyproj`), and `pyshp` cannot read a geodatabase. The shapefile resources listed
+against those HDX packages all resolve to `CE20140715PSE` — the **2014** Gaza
+assessment, not the current one.
+
+Third-party republications of the current data exist as ArcGIS feature services
+under university and NGO accounts. They are not used: that would put an
+unaccountable intermediary in the middle of the evidence chain for the single
+most contested dataset in the project.
+
+**Options, in the order I would try them:**
+
+1. **Ask UNOSAT for a shapefile or GeoJSON export.** Their older products were
+   shapefiles, they are a UN body, and this project already runs a permissions
+   workflow. Costs nothing but time.
+2. **Add `pyogrio`**, whose wheels bundle GDAL and need no system install. This
+   reverses a documented design decision and is therefore not mine to make.
+3. **Write a minimal OpenFileGDB reader.** Respects the constraint and is the
+   riskiest path: silently mis-parsed binary geometry is worse than no layer.
+
+**Currency, separately:** even UNOSAT's newest assessment is October 2025.
+
+**And the framing it must carry when it lands** — see non-negotiable 11.
+Destruction is not dispossession. People live in tent camps among the rubble;
+that ground is not lost, prohibited or stolen, and the layer must never be
+summed into a land-loss total.
+
+## 16. Gaza access restrictions — no public geometry at all
+
+OCHA report the restricted-access zone Israel calls the **"Yellow Line"** at
+**64.9% of the Gaza Strip as at June 2026**, up from about 53% at the October
+ceasefire. That figure is published in situation reports; **the polygon is not**.
+Israel's military sent the maps to aid groups in mid-March 2026 and has not
+released them publicly.
+
+The only OCHA buffer geodata is **Gaza Strip Buffer Area** (CC BY), last updated
+**2023-10-19** — the early-war perimeter buffer, not the current line.
+
+So this is a gap no licensing decision can close. The percentage is citable
+prose; the extent is not mappable from anything public. Recorded here rather
+than approximated, because a hand-drawn line across Gaza would be
+non-negotiable 2 at its worst.

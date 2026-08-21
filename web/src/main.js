@@ -1,7 +1,7 @@
 import {
   BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
   BASEMAP_PLACE_LABELS, GAZA_BOUNDS, GAZA_STYLE, MANDATE_COLOUR, MECHANISM_STYLE,
-  OSLO_CLASSES, OSLO_COLOURS,
+  OSLO_CLASSES, OSLO_COLOURS, PRCS_STYLE,
   OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
@@ -54,6 +54,7 @@ async function loadAll() {
     explainers: "explainers.json",
     gaza_municipal: "gaza_municipal.geojson",
     gaza_neighbourhoods: "gaza_neighbourhoods.geojson",
+    prcs: "prcs_facilities.geojson",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -885,6 +886,18 @@ function addGazaLayers(map) {
     paint: { "line-color": GAZA_STYLE.gaza_municipal.colour, "line-width": 1 },
   });
 
+  map.addSource("prcs", { type: "geojson", data: state.data.prcs });
+  map.addLayer({
+    id: "prcs-facilities", type: "circle", source: "prcs",
+    layout: { visibility: "none" },
+    paint: {
+      "circle-radius": 4,
+      "circle-color": PRCS_STYLE.colour,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#fff",
+    },
+  });
+
   map.addSource("gaza_neighbourhoods", { type: "geojson", data: state.data.gaza_neighbourhoods });
   map.addLayer({
     id: "gaza-neighbourhoods", type: "circle", source: "gaza_neighbourhoods",
@@ -961,6 +974,12 @@ function buildContextToggles(map) {
     { id: "oslo", label: "Oslo areas (A / B / C, H1, H2)", layers: ["oslo-fill", "oslo-line"],
       colour: "#64748b",
       definition: "The classification the West Bank area on this map is computed from." },
+    { id: "prcs", label: "PRCS facilities (86)", layers: ["prcs-facilities"],
+      colour: PRCS_STYLE.colour,
+      definition: "Palestine Red Crescent hospitals, ambulance stations and clinics "
+                  + "across 16 districts, as at 2019-07-24. Medical infrastructure is "
+                  + "protected under international humanitarian law. Two facilities "
+                  + "carry no coordinates in the source and are withheld, not placed." },
     { id: "barrier", label: "Separation Barrier (Jan 2018)", layers: ["barrier-line"],
       colour: "#e879f9" },
     { id: "villages", label: "Palestinian village boundaries",

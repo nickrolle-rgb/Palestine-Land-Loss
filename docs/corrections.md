@@ -315,3 +315,25 @@ October 2023, not what still stands. Every feature carries that caveat, the
 panel section states it, and a test asserts the caveat and the evidence date
 agree. Publishing pre-war geography is useful; publishing it silently would
 mislead, and that would be our fault rather than the source's.
+
+## PRCS facilities: two null coordinates and one category spelled twice
+
+**Source:** `prcs.zip`, State of Palestine — PRCS, document date 2019-07-24,
+CC BY via OCHA on HDX.
+
+**Null coordinates:** two records — `PRCS Abasan al Kabira sub-station` and
+`PRCS Qarara sub-station`, both Khan Younis — carry `-1.7976931348623157e+308`
+(the shapefile null sentinel, `-DBL_MAX`) in the geometry and `nan` in the DBF
+longitude and latitude fields. They have no location in the source at all.
+
+Both are **withheld and counted**, per non-negotiable 2. Plotting the sentinel
+would render them somewhere impossible; placing them near their named towns
+would be a guess. The withheld count is published in `meta.json` and asserted by
+`tests/test_invariants.py::PrcsFacilitiesAreNotGuessed`.
+
+**Category spelling:** the `Type` field contains both `Sub-Station` (9) and
+`Sub Station` (1). Merged at ingest via `TYPE_ALIASES` so the legend does not
+list one category twice, and asserted by test. Nothing else in the field is
+merged — the distinct values `EMS`, `EMS and branch` and `EMS and other` are
+left as the source records them, because collapsing those would be a judgement
+about what the source meant rather than a spelling fix.
