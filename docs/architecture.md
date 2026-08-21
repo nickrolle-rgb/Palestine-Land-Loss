@@ -6,12 +6,30 @@ sources → ETL adapters → canonical model → GeoJSON → MapLibre (static ho
                                               └→ (future) tippecanoe → PMTiles
 ```
 
-## Why no GDAL, tippecanoe or Docker
+## Why wheels only, and where GDAL fits after all
 
-None were available on the target machine and all three are awkward to install
-on Windows without WSL. Rather than make the toolchain a prerequisite, the ETL
-uses `pyshp` (pure Python shapefile reader) and `pyproj` (wheels, no system
-GDAL). The whole pipeline runs after `pip install -r requirements.txt`.
+None of GDAL, tippecanoe or Docker were available on the target machine and all
+three are awkward to install on Windows without WSL. The constraint that
+followed is **everything installs from a wheel**: the whole pipeline runs after
+`pip install -r requirements.txt`, on a bare box, with no system geo libraries.
+
+That constraint was recorded for a while as "no GDAL", which is a different and
+stricter claim than the reasoning supports — `pyproj` has always been a Python
+wrapper around PROJ, a C library, shipped as a wheel. The standard was never
+purity; it was installability.
+
+So `pyogrio` is now a dependency. UNOSAT publish their Gaza damage assessment
+only as an Esri File Geodatabase, `pyshp` cannot read one, and pyogrio's wheel
+bundles GDAL and the OpenFileGDB driver — no system install, no WSL. The
+alternative was hand-writing a binary FileGDB parser, which would have honoured
+the letter of the old rule while being far worse for data integrity: silently
+mis-parsed geometry is the worst failure this project could have.
+
+It is **confined to `etl/adapters/unosat.py`**, asserted by
+`tests/test_invariants.py::GdalStaysInItsBox`. `pyshp` still reads every
+shapefile, and every measurement — ring reassembly, simplification, area,
+rasterisation — remains readable Python in `etl/geo.py`. A reader who wants to
+check our arithmetic can still do it without trusting a binary.
 
 Consequence: shapefile polygon reassembly is done by hand in `etl/geo.py`.
 Shapefiles encode outer rings and holes by **winding order** rather than

@@ -1,6 +1,7 @@
 import {
   BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
-  BASEMAP_PLACE_LABELS, GAZA_BOUNDS, GAZA_STYLE, MANDATE_COLOUR, MECHANISM_STYLE,
+  BASEMAP_PLACE_LABELS, DAMAGE_RAMP, GAZA_BOUNDS, GAZA_STYLE, MANDATE_COLOUR,
+  MECHANISM_STYLE,
   OSLO_CLASSES, OSLO_COLOURS, PRCS_STYLE,
   OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
@@ -55,6 +56,7 @@ async function loadAll() {
     gaza_municipal: "gaza_municipal.geojson",
     gaza_neighbourhoods: "gaza_neighbourhoods.geojson",
     prcs: "prcs_facilities.geojson",
+    gaza_damage: "gaza_damage.geojson",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -886,6 +888,24 @@ function addGazaLayers(map) {
     paint: { "line-color": GAZA_STYLE.gaza_municipal.colour, "line-width": 1 },
   });
 
+  map.addSource("gaza_damage", { type: "geojson", data: state.data.gaza_damage });
+  map.addLayer({
+    id: "gaza-damage-fill", type: "fill", source: "gaza_damage",
+    layout: { visibility: "none" },
+    paint: {
+      "fill-color": [
+        "interpolate", ["linear"], ["get", "damage_sites"],
+        ...DAMAGE_RAMP.flat(),
+      ],
+      "fill-opacity": 0.72,
+    },
+  });
+  map.addLayer({
+    id: "gaza-damage-line", type: "line", source: "gaza_damage",
+    layout: { visibility: "none" },
+    paint: { "line-color": "#1c1917", "line-width": 0.6 },
+  });
+
   map.addSource("prcs", { type: "geojson", data: state.data.prcs });
   map.addLayer({
     id: "prcs-facilities", type: "circle", source: "prcs",
@@ -923,23 +943,39 @@ function buildGazaToggles(map) {
   }
 
   const rows = [
+    { id: "gaza_damage", layers: ["gaza-damage-fill", "gaza-damage-line"] },
     { id: "gaza_municipal", layers: ["gaza-municipal-fill", "gaza-municipal-line"] },
     { id: "gaza_neighbourhoods", layers: ["gaza-neighbourhoods"] },
   ];
   for (const r of rows) {
     const style = GAZA_STYLE[r.id];
     const data = state.data[r.id];
-    const n = (data && data.features && data.features.length) || 0;
+    const feats = (data && data.features) || [];
+    // The damage layer's polygons are municipalities; the number that matters
+    // is the assessed sites inside them, not how many shapes were drawn.
+    const n = r.id === "gaza_damage"
+      ? feats.reduce((a, f) => a + (f.properties.damage_sites || 0), 0)
+      : feats.length;
     const row = toggleRow({
       id: r.id, colour: style.colour,
-      label: `${style.label} (${n})`,
-      checked: false, disabled: n === 0, note: n === 0 ? "no data" : "",
+      label: `${style.label} (${n.toLocaleString()})`,
+      checked: false, disabled: feats.length === 0,
+      note: feats.length === 0 ? "no data" : "",
+      definition: r.id === "gaza_damage"
+        ? "Buildings assessed as damaged or destroyed from satellite imagery, "
+          + "UNOSAT, 11 October 2025, counted per municipality. Destruction is not "
+          + "dispossession — people live among this rubble — so this is never added "
+          + "to any land-loss total. CC BY-SA."
+        : undefined,
     });
+    const ramp = r.id === "gaza_damage" ? damageRampLegend(feats) : null;
     row.querySelector("input").addEventListener("change", (e) => {
       const vis = e.target.checked ? "visible" : "none";
       r.layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
+      if (ramp) ramp.hidden = !e.target.checked;
     });
     host.appendChild(row);
+    if (ramp) host.appendChild(ramp);
   }
 
   const zoom = document.getElementById("gaza-zoom");
@@ -948,6 +984,42 @@ function buildGazaToggles(map) {
       map.fitBounds(GAZA_BOUNDS, { padding: 40, duration: 900 });
     });
   }
+}
+
+// A choropleth without a scale is decoration. Lighter means more here, which
+// is the opposite of most readers' instinct, so the legend says it in words
+// rather than leaving the ramp to be guessed at.
+function damageRampLegend(feats) {
+  const el = document.createElement("div");
+  el.className = "oslo-legend";
+  el.hidden = true;
+  const counts = feats.map((f) => f.properties.damage_sites || 0);
+  const total = counts.reduce((a, b) => a + b, 0);
+  const worst = feats.slice().sort(
+    (a, b) => b.properties.damage_sites - a.properties.damage_sites)[0];
+
+  el.innerHTML = DAMAGE_RAMP.map(([stop, colour], i) => {
+    const next = DAMAGE_RAMP[i + 1];
+    const label = next ? `${stop.toLocaleString()}–${next[0].toLocaleString()}`
+                       : `${stop.toLocaleString()}+`;
+    return `<div class="oslo-class">
+      <span class="swatch" style="background:${colour}"></span>
+      <span class="oslo-name" style="grid-column: 2 / span 3">${label}</span>
+    </div>`;
+  }).join("");
+
+  el.innerHTML += `<p class="oslo-note">
+    Lighter is more. ${total.toLocaleString()} assessed sites across
+    ${feats.length} municipalities; the highest is
+    ${worst ? worst.properties.name : "—"} at
+    ${worst ? worst.properties.damage_sites.toLocaleString() : "—"}.
+  </p>
+  <p class="oslo-note">
+    Counted per municipality by containment, not by matching UNOSAT's place
+    names against OCHA's — those agree only 82.5% of the time, so a name join
+    would have misfiled roughly one site in six.
+  </p>`;
+  return el;
 }
 
 function buildExplainers() {

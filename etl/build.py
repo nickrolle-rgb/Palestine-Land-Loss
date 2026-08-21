@@ -21,6 +21,7 @@ from .adapters import alhaq as alhaq_adapter
 from .adapters import btselem
 from .adapters import gaza as gaza_adapter
 from .adapters import prcs as prcs_adapter
+from .adapters import unosat as unosat_adapter
 from .adapters import historical
 from .adapters import ocha
 from .adapters import ocha_violence
@@ -307,6 +308,21 @@ def build_base() -> dict:
         note=gaza_adapter.GAZA_CURRENCY,
     )
 
+    print("[unos] UNOSAT Gaza building damage (11 October 2025)")
+    damage_feats, damage_stats = unosat_adapter.damage_by_municipality(gaza_muni)
+    print(f"       {damage_stats['sites_total']:,} assessed sites -> "
+          f"{damage_stats['sites_placed']:,} placed by containment, "
+          f"{damage_stats['sites_unplaced']:,} outside every municipality")
+    print(f"       UNOSAT's own municipality label agrees with our containment "
+          f"result on {damage_stats['label_agreement_pct']}% "
+          f"— which is why the join is geometric, not by name")
+    # Simplified for drawing only; the counts are computed against the source
+    # polygons above and are unaffected by simplification.
+    write_layer(
+        "gaza_damage.geojson",
+        _simplify_features([feature(f["geometry"], f["properties"]) for f in damage_feats]),
+    )
+
     print("[prcs] Palestine Red Crescent Society facilities")
     prcs_feats, prcs_stats = prcs_adapter.load_facilities()
     print(f"       {prcs_stats['plotted']} plotted, {prcs_stats['withheld']} withheld "
@@ -514,6 +530,7 @@ def build_base() -> dict:
         "village_boundaries": len(villages),
         "gaza_municipal": len(gaza_muni),
         "prcs": {k: v for k, v in prcs_stats.items() if k != "withheld_names"},
+        "gaza_damage": damage_stats,
         "gaza_neighbourhoods": gaza_stats,
         "locality_merge": {k: v for k, v in merge_stats.items() if not k.endswith("_detail")},
         "depopulated_1948": len(depop),

@@ -168,9 +168,22 @@ export const OSLO_COLOURS = Object.fromEntries(
 // administrative outlines, not a measure of anything taken, and colouring them
 // like a loss layer would assert something the source cannot support.
 export const GAZA_STYLE = {
+  gaza_damage: { colour: "#d6d3d1", label: "Buildings damaged or destroyed" },
   gaza_municipal: { colour: "#38bdf8", label: "Municipal boundaries", count: 33 },
   gaza_neighbourhoods: { colour: "#7dd3fc", label: "Neighbourhoods", count: 149 },
 };
+
+// Gaza building damage. An ash ramp, deliberately outside the red/amber family
+// every "land taken" layer uses, because destruction is a different mechanism
+// (non-negotiable 11): people live among this rubble and the ground is not lost.
+// Light-on-dark so the ramp reads against the basemap.
+export const DAMAGE_RAMP = [
+  [0, "#3f3f46"],
+  [2000, "#78716c"],
+  [8000, "#a8a29e"],
+  [20000, "#d6d3d1"],
+  [45000, "#f5f5f4"],
+];
 
 // Palestine Red Crescent Society facilities. Red-cross red is deliberate and
 // is the one place on this map that colour denotes protection rather than loss.

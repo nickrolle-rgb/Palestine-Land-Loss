@@ -386,7 +386,7 @@ would break non-negotiable 1. Recorded here so the absence is visible. If Kerem
 Navot's petition ever succeeds this becomes the single highest-value ingest in
 the project.
 
-## 15. Gaza destruction — the data exists and we cannot read it
+## 15. Gaza destruction — RESOLVED 2026-08-21, now a layer
 
 **UNOSAT** publish a Comprehensive Building Damage Assessment for the Gaza
 Strip, updated roughly quarterly. The most recent is **11 October 2025** (5.0 MB,
@@ -412,15 +412,27 @@ under university and NGO accounts. They are not used: that would put an
 unaccountable intermediary in the middle of the evidence chain for the single
 most contested dataset in the project.
 
-**Options, in the order I would try them:**
+**Resolved by adding `pyogrio`** on 2026-08-21. Its wheel bundles GDAL and the
+OpenFileGDB driver, so it needs no system install — the same bargain `pyproj`
+has always made with PROJ, and it satisfies the constraint that actually
+mattered (everything installs from a wheel). It is confined to
+`etl/adapters/unosat.py` by test. The alternative, hand-writing a binary FileGDB
+parser, would have honoured the letter of the old "no GDAL" rule while being far
+worse for integrity.
 
-1. **Ask UNOSAT for a shapefile or GeoJSON export.** Their older products were
-   shapefiles, they are a UN body, and this project already runs a permissions
-   workflow. Costs nothing but time.
-2. **Add `pyogrio`**, whose wheels bundle GDAL and need no system install. This
-   reverses a documented design decision and is therefore not mine to make.
-3. **Write a minimal OpenFileGDB reader.** Respects the constraint and is the
-   riskiest path: silently mis-parsed binary geometry is worse than no layer.
+**What shipped:** 198,308 assessed damage sites, aggregated to the 33 OCHA
+municipal polygons **by containment**. Every site landed inside one — zero
+unplaced, which is a strong independent check that two separately published
+datasets agree spatially. UNOSAT's own `Municipality` label agrees with the
+containment result only **82.5%** of the time, so a name join would have
+misfiled roughly one site in six; that number is published rather than buried.
+
+Highest count is Gaza at 44,492, then Khan Yunis 29,110 and Rafah 27,187.
+
+**Still open:** the per-site detail is aggregated away, and each site carries up
+to fourteen dated assessment rounds that could drive a destruction timeline. Not
+built — 198,308 points is ~20 MB of GeoJSON against a 6 MB payload, and that
+waits for PMTiles.
 
 **Currency, separately:** even UNOSAT's newest assessment is October 2025.
 

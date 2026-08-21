@@ -161,6 +161,20 @@ SOURCES: dict[str, Source] = {
             "share-alike obligation flows to this project from it."
         ),
     ),
+    "unosat": Source(
+        source_id="unosat",
+        name="UNOSAT Gaza Strip Comprehensive Building Damage Assessment",
+        publisher="UNITAR / UNOSAT",
+        licence="CC BY-SA 4.0 (as published on HDX) — attribution and share-alike, "
+                "no non-commercial clause",
+        url="https://data.humdata.org/dataset/unosat-gaza-strip-comprehensive-damage-assessment-11-october-2025",
+        attribution="UNITAR/UNOSAT — Gaza Strip Comprehensive Building Damage "
+                    "Assessment, 11 October 2025",
+        currency_note="Assessment date 11 October 2025; published 31 October 2025.",
+        notes="Share-alike binds adaptations, not aggregation. Our per-municipality "
+              "counts ARE an adaptation and are published CC BY-SA. Damage is not "
+              "dispossession (non-negotiable 11): never summed into a land-loss total.",
+    ),
     "wikidata": Source(
         source_id="wikidata",
         name="Wikidata",
@@ -273,6 +287,16 @@ HDX_RESOURCES: list[HdxResource] = [
         description="149 Gaza neighbourhood points (CC BY, dated 2019-07-18). "
                     "111 of them carry no district or community value in the "
                     "source; those fields are omitted rather than inferred.",
+    ),
+    HdxResource(
+        key="unosat_gaza_damage",
+        source_id="unosat",
+        url="https://unosat.org/static/unosat_filesystem/4213/OCHA-CBPF-OPT-031_UNOSAT_Gaza_Strip_CDA_11October2025_GDB.zip",
+        filename="unosat_gaza_cda_20251011.zip",
+        shapefile_base=None,   # not a shapefile — an Esri File Geodatabase
+        source_crs="EPSG:4326",
+        description="198,308 assessed damage sites in the Gaza Strip, each with up "
+                    "to 14 dated assessment rounds. Esri FileGDB; read via pyogrio.",
     ),
     HdxResource(
         key="prcs_facilities",

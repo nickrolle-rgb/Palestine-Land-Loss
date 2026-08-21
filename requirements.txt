@@ -1,7 +1,14 @@
-# Pure-Python geo stack — deliberately avoids GDAL/tippecanoe so the ETL runs
-# on a bare Windows box with no system geo libraries. See docs/architecture.md.
+# Geo stack chosen so the ETL runs on a bare Windows box with no system geo
+# libraries and no WSL: everything here installs from a wheel. That is the
+# actual constraint — wheels yes, system installs no — not "pure Python".
+# See docs/architecture.md.
 pyshp>=3.1          # shapefile reader (pure Python)
 pyproj>=3.7         # CRS transforms (wheels, no GDAL needed)
 requests>=2.32      # HTTP with caching layer in etl/fetch.py
 beautifulsoup4>=4.12 # Al-Haq HTML parsing
 lxml>=5.0           # parser backend
+# Reads Esri File Geodatabases, which is the only format UNOSAT publish their
+# Gaza damage assessment in. The wheel bundles GDAL and the OpenFileGDB driver,
+# so this needs no system GDAL — the same bargain pyproj already makes with
+# PROJ. Confined to etl/adapters/unosat.py by test; nothing else may import it.
+pyogrio>=0.13       # Esri FileGDB reader (GDAL bundled in the wheel)

@@ -737,3 +737,70 @@ class PrcsFacilitiesAreNotGuessed(unittest.TestCase):
         types = {f["properties"]["facility_type"] for f in self.feats}
         self.assertNotIn("Sub Station", types,
                          "the source's two spellings must be merged at ingest")
+
+
+class GdalStaysInItsBox(unittest.TestCase):
+    """pyogrio is allowed in for one job. It does not get to spread.
+
+    The dependency exists because UNOSAT publish only an Esri File Geodatabase.
+    Every measurement this project makes — ring reassembly, simplification,
+    area, rasterisation — stays readable Python in etl/geo.py, because a reader
+    who wants to check the arithmetic should not have to trust a binary.
+    """
+
+    ALLOWED = {"unosat.py"}
+
+    def test_only_the_unosat_adapter_imports_pyogrio(self):
+        # Imports, not mentions: sources.py names the library in a description,
+        # which is documentation rather than a dependency.
+        import ast
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1] / "etl"
+        offenders = []
+        for path in root.rglob("*.py"):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            imported = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported.update(a.name.split(".")[0] for a in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    imported.add(node.module.split(".")[0])
+            if "pyogrio" in imported and path.name not in self.ALLOWED:
+                offenders.append(str(path.relative_to(root)))
+        self.assertEqual(offenders, [], f"pyogrio leaked into {offenders}")
+
+
+class DestructionIsNotDispossession(unittest.TestCase):
+    """Non-negotiable 11, enforced rather than trusted.
+
+    The three Gaza headline figures — roughly 69% of structures damaged, 64.9%
+    of territory access-restricted, 70% under military control — are close
+    enough to invite exactly the conflation this rule forbids.
+    """
+
+    def setUp(self):
+        self.damage = load("gaza_damage.geojson")["features"]
+        self.meta = load("meta.json")
+
+    def test_damage_is_its_own_mechanism(self):
+        for f in self.damage:
+            self.assertEqual(f["properties"].get("mechanism"), "destruction")
+
+    def test_damage_never_enters_the_land_coverage_figures(self):
+        # coverage.py precomputes every land-loss combination. None of its keys
+        # may reference damage, or a destroyed building would become lost land.
+        coverage = json.dumps(self.meta["stats"].get("coverage", {})).lower()
+        for word in ("damage", "unosat", "destruction"):
+            self.assertNotIn(word, coverage,
+                             f"'{word}' reached the land-loss coverage figures")
+
+    def test_every_polygon_states_its_share_alike_terms(self):
+        for f in self.damage:
+            self.assertIn("BY-SA", f["properties"].get("licence", ""),
+                          "the aggregate is an adaptation and must carry UNOSAT's terms")
+
+    def test_containment_placed_every_site(self):
+        s = self.meta["stats"]["gaza_damage"]
+        self.assertEqual(s["sites_total"], s["sites_placed"] + s["sites_unplaced"])
+        self.assertEqual(s["sites_unplaced"], 0,
+                         "a site outside every municipality would be unattributable")

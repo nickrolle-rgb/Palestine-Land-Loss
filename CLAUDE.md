@@ -98,8 +98,14 @@ python -m http.server -d web 8000
 - **Settlement polygons are grouped by `GIS_ID`** to merge multi-part settlements
   and recover names from blank-named parts. 201 polygons → 160 entities.
 - **Windows console encoding** mangles Arabic — use `PYTHONIOENCODING=utf-8`.
-- **No GDAL/tippecanoe/Docker** on this machine, by design. Don't add them as
-  prerequisites; `pyshp` + `pyproj` cover it.
+- **Everything installs from a wheel; nothing needs a system install.** That is
+  the real constraint, and it was mis-stated for a while as "no GDAL". No
+  tippecanoe, no Docker, no WSL, no system GDAL — but `pyogrio`, whose wheel
+  bundles GDAL, is in, on the same terms `pyproj` has always been in with PROJ.
+  It is **confined to `etl/adapters/unosat.py`** and a test enforces that:
+  `pyshp` still reads every shapefile, and every measurement — ring reassembly,
+  simplification, area, rasterisation — stays readable Python in `etl/geo.py`,
+  because being auditable is worth more here than being convenient.
 - **MapLibre style expressions can't index nested arrays.** Anything used for
   styling (e.g. `pop_1945_palestinian`) must be flattened in `schema.py`.
 - **Swipe curtain must tolerate a zero-width container.** If the map has no
