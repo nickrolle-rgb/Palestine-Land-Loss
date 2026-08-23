@@ -187,6 +187,19 @@ SOURCES: dict[str, Source] = {
         notes="Every record is published with Geo Precision 'censored' and no "
               "coordinates. This is a table, never map pins — see non-negotiable 2.",
     ),
+    "natural_earth": Source(
+        source_id="natural_earth",
+        name="Natural Earth — disputed areas (1:10m)",
+        publisher="Natural Earth",
+        licence="Public domain — no restrictions on use",
+        url="https://www.naturalearthdata.com/downloads/10m-cultural-vectors/",
+        attribution="Made with Natural Earth",
+        currency_note="Boundary depictions are generalised at 1:10m and are "
+                      "indicative extents, not survey boundaries.",
+        notes="Used only for territory occupied by Israel beyond Palestine — the "
+              "Golan Heights and Shebaa Farms. Never summed into Palestinian "
+              "land-loss figures; see docs/data-gaps.md.",
+    ),
     "wikidata": Source(
         source_id="wikidata",
         name="Wikidata",
@@ -309,6 +322,16 @@ HDX_RESOURCES: list[HdxResource] = [
         source_crs="EPSG:4326",
         description="198,308 assessed damage sites in the Gaza Strip, each with up "
                     "to 14 dated assessment rounds. Esri FileGDB; read via pyogrio.",
+    ),
+    HdxResource(
+        key="ne_disputed_areas",
+        source_id="natural_earth",
+        url="https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_disputed_areas.geojson",
+        filename="ne_10m_admin_0_disputed_areas.geojson",
+        shapefile_base=None,
+        source_crs="EPSG:4326",
+        description="99 disputed areas worldwide; three are used — Golan Heights, "
+                    "Shebaa Farms and the UNDOF Zone.",
     ),
     HdxResource(
         key="health_attacks",

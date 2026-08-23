@@ -22,6 +22,7 @@ from .adapters import btselem
 from .adapters import gaza as gaza_adapter
 from .adapters import prcs as prcs_adapter
 from .adapters import insecurity as insecurity_adapter
+from .adapters import occupied_beyond
 from .adapters import unosat as unosat_adapter
 from .adapters import historical
 from .adapters import ocha
@@ -340,6 +341,15 @@ def build_base() -> dict:
         [feature(f["geometry"], f["properties"]) for f in prcs_feats],
     )
 
+    print("[beyond] Territory occupied beyond Palestine")
+    beyond, beyond_stats = occupied_beyond.load()
+    print(f"       {beyond_stats['features']}: {', '.join(beyond_stats['names'])}")
+    print("       kept out of every Palestinian land figure by design")
+    write_layer(
+        "occupied_beyond_palestine.geojson",
+        _simplify_features([feature(f["geometry"], f["properties"]) for f in beyond]),
+    )
+
     print("[hlth] Attacks on health care (Insecurity Insight)")
     health, health_stats = insecurity_adapter.load_health_attacks()
     print(f"       {health['incidents']:,} incidents | {health['censored']:,} geo-censored by "
@@ -553,6 +563,7 @@ def build_base() -> dict:
         "gaza_municipal": len(gaza_muni),
         "prcs": {k: v for k, v in prcs_stats.items() if k != "withheld_names"},
         "health_attacks": health_stats,
+        "occupied_beyond": beyond_stats,
         "gaza_damage": {**damage_stats, "timeline": damage_points,
                         "timeline_meta": damage_timeline_stats},
         "gaza_neighbourhoods": gaza_stats,

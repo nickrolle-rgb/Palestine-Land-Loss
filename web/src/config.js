@@ -191,6 +191,14 @@ export const DAMAGE_RAMP = [
 // is the one place on this map that colour denotes protection rather than loss.
 export const PRCS_STYLE = { colour: "#ef4444", label: "PRCS facilities" };
 
+// Occupied beyond Palestine. A cool, separate family — nothing in the
+// Palestinian loss palette — because the whole point of the layer is that it is
+// a different people's land under an adjacent mechanism.
+export const BEYOND_STYLE = {
+  occupied: { colour: "#818cf8", label: "Occupied, claimed by another state" },
+  ceasefire_zone: { colour: "#94a3b8", label: "UN ceasefire zone" },
+};
+
 //: Gaza Strip bounding box, for the zoom control.
 export const GAZA_BOUNDS = [[34.19, 31.20], [34.58, 31.61]];
 

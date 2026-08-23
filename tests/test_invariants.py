@@ -840,3 +840,46 @@ class CensoredDataIsNeverPlaced(unittest.TestCase):
         self.assertTrue(refs, "uncited dataset")
         for r in refs:
             self.assertIn(r, table)
+
+
+class OccupiedBeyondStaysSeparate(unittest.TestCase):
+    """The Golan is Syrian and Shebaa Farms is Lebanese.
+
+    Folding either into a Palestinian total would be the error non-negotiable 8
+    forbids between 1948 and post-1967, applied to a different pair. The layer
+    exists because the mechanism is adjacent; the test exists because the people
+    are not the same.
+    """
+
+    def setUp(self):
+        self.feats = load("occupied_beyond_palestine.geojson")["features"]
+        self.meta = load("meta.json")
+
+    def test_every_feature_names_administrator_and_claimant(self):
+        for f in self.feats:
+            p = f["properties"]
+            self.assertTrue(p.get("administered_by"), f"{p.get('name')} has no administrator")
+            if p.get("status") == "occupied":
+                self.assertTrue(p.get("claimed_by"), f"{p.get('name')} has no claimant")
+
+    def test_every_feature_disclaims_being_palestinian(self):
+        for f in self.feats:
+            self.assertTrue(f["properties"].get("not_palestinian"))
+            self.assertIn("Not Palestinian", f["properties"].get("disclaimer", ""))
+
+    def test_it_never_reaches_the_land_figures(self):
+        blob = json.dumps({
+            "coverage": self.meta["stats"].get("coverage", {}),
+            "land": self.meta["stats"].get("land_measures", {}),
+            "west_bank_km2": self.meta["stats"].get("west_bank_km2"),
+        }).lower()
+        for word in ("golan", "shebaa", "undof", "beyond"):
+            self.assertNotIn(word, blob, f"'{word}' reached a Palestinian land figure")
+
+    def test_generalised_boundaries_publish_no_area(self):
+        for f in self.feats:
+            p = f["properties"]
+            self.assertIn("generalised", p)
+            for key in p:
+                self.assertNotIn("area_m2", key)
+                self.assertNotIn("km2", key)

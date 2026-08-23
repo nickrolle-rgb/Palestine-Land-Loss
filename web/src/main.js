@@ -2,7 +2,7 @@ import {
   BASEMAP, DATA, EXTENT_STYLE, FALLBACK_STYLE, HISTORICAL, HISTORICAL_LAYERS,
   BASEMAP_PLACE_LABELS, DAMAGE_RAMP, GAZA_BOUNDS, GAZA_STYLE, MANDATE_COLOUR,
   MECHANISM_STYLE,
-  OSLO_CLASSES, OSLO_COLOURS, PRCS_STYLE,
+  BEYOND_STYLE, OSLO_CLASSES, OSLO_COLOURS, PRCS_STYLE,
   OUTPOST_COLOUR, STAGE_COLOURS,
   STYLE_TIMEOUT_MS, TIME,
 } from "./config.js";
@@ -58,6 +58,7 @@ async function loadAll() {
     prcs: "prcs_facilities.geojson",
     gaza_damage: "gaza_damage.geojson",
     health: "health_attacks.json",
+    beyond: "occupied_beyond_palestine.geojson",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -889,6 +890,29 @@ function addGazaLayers(map) {
     paint: { "line-color": GAZA_STYLE.gaza_municipal.colour, "line-width": 1 },
   });
 
+  map.addSource("beyond", { type: "geojson", data: state.data.beyond });
+  map.addLayer({
+    id: "beyond-fill", type: "fill", source: "beyond",
+    layout: { visibility: "none" },
+    paint: {
+      "fill-color": ["match", ["get", "status"],
+        "occupied", BEYOND_STYLE.occupied.colour,
+        "ceasefire_zone", BEYOND_STYLE.ceasefire_zone.colour,
+        "#64748b"],
+      "fill-opacity": 0.3,
+    },
+  });
+  map.addLayer({
+    id: "beyond-line", type: "line", source: "beyond",
+    layout: { visibility: "none" },
+    paint: {
+      "line-color": ["match", ["get", "status"],
+        "occupied", BEYOND_STYLE.occupied.colour,
+        BEYOND_STYLE.ceasefire_zone.colour],
+      "line-width": 1.2, "line-dasharray": [3, 2],
+    },
+  });
+
   map.addSource("gaza_damage", { type: "geojson", data: state.data.gaza_damage });
   map.addLayer({
     id: "gaza-damage-fill", type: "fill", source: "gaza_damage",
@@ -1046,6 +1070,32 @@ function damageRampLegend(feats) {
 // closer to the danger than we are and not ours to work around. So it is a
 // table, and the panel says why rather than leaving a reader to wonder where
 // the pins are.
+// One toggle for all three, because the point is that they belong together and
+// apart from everything else on the map. Dashed outlines: the Natural Earth
+// boundaries are generalised at 1:10m and should not read as surveyed.
+function buildBeyondToggles(map) {
+  const host = document.getElementById("beyond-toggles");
+  if (!host) return;
+  const feats = (state.data.beyond && state.data.beyond.features) || [];
+  const row = toggleRow({
+    id: "beyond", colour: BEYOND_STYLE.occupied.colour,
+    label: `Golan Heights, Shebaa Farms, UNDOF Zone (${feats.length})`,
+    checked: false, disabled: feats.length === 0,
+    note: feats.length === 0 ? "no data" : "",
+    definition: "Golan Heights and Shebaa Farms are administered by Israel and "
+      + "claimed by Syria and Lebanon. UNSC Resolution 497 (1981) held the Golan "
+      + "annexation null and void — the same finding Resolution 478 made about "
+      + "East Jerusalem. Boundaries generalised at 1:10m; no area is computed "
+      + "from them.",
+  });
+  row.querySelector("input").addEventListener("change", (e) => {
+    const vis = e.target.checked ? "visible" : "none";
+    ["beyond-fill", "beyond-line"].forEach(
+      (l) => map.getLayer(l) && map.setLayoutProperty(l, "visibility", vis));
+  });
+  host.appendChild(row);
+}
+
 function buildHealthAttacks() {
   const host = document.getElementById("health-attacks");
   if (!host) return;
@@ -1446,6 +1496,7 @@ async function init() {
       buildMechanismToggles(map);
       buildContextToggles(map);
       buildGazaToggles(map);
+      buildBeyondToggles(map);
       buildHealthAttacks();
       buildExplainers();
       buildHistoricalToggles(map);
