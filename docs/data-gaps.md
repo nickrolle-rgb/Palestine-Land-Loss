@@ -441,7 +441,7 @@ Destruction is not dispossession. People live in tent camps among the rubble;
 that ground is not lost, prohibited or stolen, and the layer must never be
 summed into a land-loss total.
 
-## 16. Gaza access restrictions — no public geometry at all
+## 16. Gaza access restrictions — geometry found 2026-08-23, pending permission
 
 OCHA report the restricted-access zone Israel calls the **"Yellow Line"** at
 **64.9% of the Gaza Strip as at June 2026**, up from about 53% at the October
@@ -466,6 +466,27 @@ situation report is quoted directly on what the line is and that it has been
 expanded repeatedly, and the missing geometry is stated as an open question
 rather than left as a silence. Territory Palestinians cannot enter is therefore
 on the map as a sourced, dated fact, without a single invented coordinate.
+
+**Update, 2026-08-23 — a vector line exists.** INSS (Institute for National
+Security Studies, Tel Aviv) publish an ArcGIS map, *Post-War Gaza*, carrying a
+single 232-vertex polygon titled "Israeli Military Presence". We measure it at
+**197.6 km², 54.1% of the Strip** — consistent with the ~53% reported at the
+October 2025 ceasefire, and arrived at independently, which is the useful part.
+
+Its `Shape__Area` attribute says 271,902,533 m². That is Web Mercator, inflated
+about 37% at this latitude, and must never be quoted — the same class of error
+as recomputing area from simplified geometry.
+
+It is registered **disabled** pending written confirmation. The item says "Free
+to be used by the public", but on the parent app rather than the layer, and it
+is not a named licence. Draft at `docs/permissions/inss-yellow-line.md`.
+
+Two things to note about the source when it lands. INSS is an Israeli security
+think tank, which cuts in its favour here: a source with no incentive to
+overstate Israeli control putting it at 54% is stronger evidence than an
+advocacy source would be. And the polygon is *their depiction*, not an official
+demarcation — it must be attributed and dated as such, never presented as the
+line itself.
 
 **Not asserted:** the widely repeated 64.9% figure. It does not appear in the
 OCHA report cited, and no OCHA document stating it could be read directly — the

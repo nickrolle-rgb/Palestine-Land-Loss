@@ -187,6 +187,22 @@ SOURCES: dict[str, Source] = {
         notes="Every record is published with Geo Precision 'censored' and no "
               "coordinates. This is a table, never map pins — see non-negotiable 2.",
     ),
+    "inss": Source(
+        source_id="inss",
+        name="INSS — Post-War Gaza: Israeli military presence (the Yellow Line)",
+        publisher="Institute for National Security Studies, Tel Aviv",
+        licence="\"Free to be used by the public\" — stated by INSS on the parent "
+                "ArcGIS item. Not a named licence, and not stated on the layer "
+                "itself. Confirmation requested; see docs/permissions/inss-yellow-line.md",
+        url="https://www.inss.org.il/publication/gaza-day-after/",
+        enabled=False,
+        attribution="Institute for National Security Studies (INSS) — Post-War Gaza",
+        currency_note="Published November 2025. The feature carries no date field; "
+                      "the as-of date comes from the publication, not the data.",
+        notes="One polygon, 232 vertices, measured by us at 197.6 km2 = 54.1% of "
+              "the Strip — consistent with the ~53% reported at the October 2025 "
+              "ceasefire. Disabled pending written confirmation (non-negotiable 4).",
+    ),
     "natural_earth": Source(
         source_id="natural_earth",
         name="Natural Earth — disputed areas (1:10m)",
