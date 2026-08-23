@@ -1,6 +1,19 @@
 # Gaza Maps / Databases for Palestine — request for API access
 
-**Status:** drafted 2026-08-23, not sent. Source registered **disabled**.
+**Status:** source **enabled** and in use as at 2026-08-23. The note below is a
+courtesy, not a permission request — their API documentation is public and
+states its own terms.
+
+**The basis.** `gazamaps.com/api-docs` says plainly: *"Our API endpoint is a GET
+request and returns json. No authentication is required."* It opens with *"Thank
+you for considering building with our API. Our mission is to facilitate memory
+and accountability, and we hope our API helps you, as you work towards the same
+goals."* and closes by inviting people to ask for custom endpoints. That is a
+published invitation to build, which is a different thing from an absent licence.
+
+I earlier recorded this API as returning 403 and therefore access-controlled.
+That was wrong: the 403 was on the bare `/api/` path, not the documented
+`/api/v1/displacement` endpoint, which returns 200 without authentication.
 
 ## Why this one and not the other
 
@@ -21,7 +34,7 @@ scrape.
 
 ## Draft
 
-Subject: API access — Gaza Maps displacement orders and Yellow Blocks
+Subject: Using your displacement-orders API — Palestinian Land Loss
 
 Dear Databases for Palestine,
 
@@ -43,12 +56,20 @@ anywhere on this subject — reconstructing the IDF's own orders, stating the
 projection, and saying plainly what you are not claiming. I would rather carry
 your work with attribution than approximate it.
 
-Would you consider granting access to `gazamaps.com/api/` for this use? I am
-interested in the designated kill zone / displacement order geometry and the
-Yellow Blocks positions. In return I can commit to attribution and a link on
-every feature, publication of the document date and our retrieval date, removal
-or correction on request, and never presenting your depiction as an official
-demarcation.
+We are now using `/api/v1/displacement` on the basis of your published
+documentation, and I wanted to tell you rather than simply take it. All 154
+orders are carried with attribution to Gaza Maps and Databases for Palestine, a
+link back to your page for each, and the retrieval date. We do not present your
+work as an official demarcation, and we will remove or correct anything on
+request.
+
+One thing we deliberately do **not** do: total the order areas. They sum to
+about 3,056 km² against a Strip of roughly 365, because orders overlap and are
+reissued, and the map says so where the figures appear. If that framing is not
+how you would put it, I would welcome the correction.
+
+If the Yellow Blocks positions are ever available through the API, we would
+carry those too.
 
 One thing I would want to represent correctly if we carry it: BBC Verify found
 the physical blocks sitting up to 520 metres from the line on the IDF's own map.

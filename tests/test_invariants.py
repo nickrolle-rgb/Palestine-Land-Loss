@@ -883,3 +883,49 @@ class OccupiedBeyondStaysSeparate(unittest.TestCase):
             for key in p:
                 self.assertNotIn("area_m2", key)
                 self.assertNotIn("km2", key)
+
+
+class DisplacementOrdersAreNeverTotalled(unittest.TestCase):
+    """154 orders sum to ~3,056 km2 against a Strip of ~365.
+
+    Orders overlap, repeat and are reissued, so the sum measures how often
+    people were told to move, not how much land exists. An order is also not a
+    transfer of ownership — non-negotiable 11's logic applied to displacement.
+    """
+
+    def setUp(self):
+        self.doc = load("displacement_orders.json")
+        self.meta = load("meta.json")
+
+    def test_no_total_area_is_published(self):
+        blob = json.dumps({k: v for k, v in self.doc.items() if k != "never_sum"})
+        self.assertNotIn("total_km2", blob)
+        self.assertNotIn("sum_km2", blob)
+        self.assertNotIn("area_total", blob)
+
+    def test_the_warning_against_summing_ships_with_the_data(self):
+        self.assertIn("never_sum", self.doc)
+        self.assertIn("overlap", self.doc["never_sum"].lower())
+
+    def test_it_never_reaches_the_land_figures(self):
+        # Match structure, not prose: the firing-zone label legitimately says
+        # "closure order was signed", and an earlier version of this test failed
+        # on that word. What matters is that no land measure is keyed on
+        # displacement, not which nouns appear in a description.
+        coverage = self.meta["stats"].get("coverage", {})
+        keys = set(coverage.get("combinations", {}))
+        for k in keys:
+            self.assertNotIn("displacement", k)
+        measures = {m.get("id") for m in self.meta["stats"].get("land_measures", [])}
+        self.assertNotIn("displacement", measures)
+        self.assertNotIn("displacement_orders", measures)
+
+    def test_every_order_resolves_to_the_post_that_issued_it(self):
+        missing = [o["date"] for o in self.doc["orders"] if not o.get("idf_post")]
+        self.assertLessEqual(len(missing), len(self.doc["orders"]) * 0.1,
+                             f"{len(missing)} orders with no source post")
+
+    def test_nothing_is_plotted(self):
+        blob = json.dumps(self.doc).lower()
+        for key in ("geometry", "coordinates", "latitude", "longitude"):
+            self.assertNotIn(key, blob)

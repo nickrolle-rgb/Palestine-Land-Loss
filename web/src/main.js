@@ -59,6 +59,7 @@ async function loadAll() {
     gaza_damage: "gaza_damage.geojson",
     health: "health_attacks.json",
     beyond: "occupied_beyond_palestine.geojson",
+    orders: "displacement_orders.json",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -1003,6 +1004,8 @@ function buildGazaToggles(map) {
     if (ramp) host.appendChild(ramp);
   }
 
+  renderDisplacementOrders(host);
+
   const zoom = document.getElementById("gaza-zoom");
   if (zoom) {
     zoom.addEventListener("click", () => {
@@ -1134,6 +1137,31 @@ function buildHealthAttacks() {
 function resolveEvidenceRefs(obj, meta) {
   const table = (meta && meta.evidence) || {};
   return (obj.evidence_ref || []).map((id) => table[id]).filter(Boolean);
+}
+
+// Forced displacement orders. Counts and dates only — the orders name numbered
+// population blocks, not polygons, and we hold no block gazetteer, so nothing
+// is plotted. The areas are deliberately not totalled: see `never_sum`.
+function renderDisplacementOrders(host) {
+  const d = state.data.orders;
+  if (!host || !d || !d.orders_total) return;
+  const months = Object.entries(d.by_month || {});
+  const peak = Math.max(...months.map(([, v]) => v.orders), 1);
+  const wrap = document.createElement("div");
+  wrap.className = "orders-block";
+  wrap.innerHTML = `
+    <p class="hint"><strong>${d.orders_total} IDF forced displacement orders</strong>,
+    ${d.first_date} to ${d.last_date}. Each resolves to the military's own post
+    that issued it. The largest single order covered
+    ${d.largest_single_order_km2} km².</p>
+    <div class="damage-timeline">` +
+    months.map(([mon, v]) => `<div class="dt-row">
+      <span class="dt-date">${mon}</span>
+      <span class="dt-bar"><i style="width:${(100 * v.orders / peak).toFixed(1)}%"></i></span>
+      <span class="dt-n">${v.orders}</span>
+    </div>`).join("") + `</div>
+    <p class="hint">${d.never_sum || ""}</p>`;
+  host.appendChild(wrap);
 }
 
 function buildExplainers() {

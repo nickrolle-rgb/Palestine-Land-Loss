@@ -202,9 +202,17 @@ SOURCES: dict[str, Source] = {
         source_id="databases_for_palestine",
         name="Gaza Maps / Databases for Palestine",
         publisher="Databases for Palestine",
-        licence="UNKNOWN — API exists but returns 403; access not yet requested.",
-        url="https://gazamaps.com/methodology",
-        enabled=False,
+        licence=(
+            "Public documented API, no authentication: \"Our API endpoint is a GET "
+            "request and returns json. No authentication is required.\" Their docs "
+            "open with \"Thank you for considering building with our API. Our "
+            "mission is to facilitate memory and accountability, and we hope our "
+            "API helps you, as you work towards the same goals.\" Used on that "
+            "basis, with attribution; courtesy note sent, see "
+            "docs/permissions/databases-for-palestine.md."
+        ),
+        url="https://gazamaps.com/api-docs",
+        enabled=True,
         attribution="Gaza Maps, a project of Databases for Palestine",
         notes="Publishes a stated methodology: they reconstruct the IDF's own "
               "'Swords of Iron' displacement orders and compute areas in WGS84, "
@@ -362,6 +370,17 @@ HDX_RESOURCES: list[HdxResource] = [
         source_crs="EPSG:4326",
         description="198,308 assessed damage sites in the Gaza Strip, each with up "
                     "to 14 dated assessment rounds. Esri FileGDB; read via pyogrio.",
+    ),
+    HdxResource(
+        key="displacement_orders",
+        source_id="databases_for_palestine",
+        url="https://gazamaps.com/api/v1/displacement",
+        filename="gazamaps_displacement.json",
+        shapefile_base=None,
+        source_crs=None,
+        description="154 IDF forced displacement orders, 2023-10-08 to 2026-02-06, "
+                    "each linking to the IDF post that issued it. Areas per order; "
+                    "block identifiers, not geometry.",
     ),
     HdxResource(
         key="ne_disputed_areas",

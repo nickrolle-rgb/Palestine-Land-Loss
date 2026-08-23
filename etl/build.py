@@ -21,6 +21,7 @@ from .adapters import alhaq as alhaq_adapter
 from .adapters import btselem
 from .adapters import gaza as gaza_adapter
 from .adapters import prcs as prcs_adapter
+from .adapters import displacement as displacement_adapter
 from .adapters import insecurity as insecurity_adapter
 from .adapters import occupied_beyond
 from .adapters import unosat as unosat_adapter
@@ -350,6 +351,17 @@ def build_base() -> dict:
         _simplify_features([feature(f["geometry"], f["properties"]) for f in beyond]),
     )
 
+    print("[disp] IDF forced displacement orders (Gaza Maps)")
+    orders, order_stats = displacement_adapter.load_orders()
+    print(f"       {order_stats['orders']} orders, {order_stats['first_date']} to "
+          f"{order_stats['last_date']} | largest single order "
+          f"{order_stats['largest_single_order_km2']} km2")
+    from .schema import _evidence_id as _eid
+    _refs = []
+    for _ev in orders.pop("evidence", []):
+        _i = _eid(_ev); EVIDENCE_TABLE.setdefault(_i, _ev); _refs.append(_i)
+    write_json(PROCESSED / "displacement_orders.json", {**orders, "evidence_ref": _refs})
+
     print("[hlth] Attacks on health care (Insecurity Insight)")
     health, health_stats = insecurity_adapter.load_health_attacks()
     print(f"       {health['incidents']:,} incidents | {health['censored']:,} geo-censored by "
@@ -563,6 +575,7 @@ def build_base() -> dict:
         "gaza_municipal": len(gaza_muni),
         "prcs": {k: v for k, v in prcs_stats.items() if k != "withheld_names"},
         "health_attacks": health_stats,
+        "displacement_orders": order_stats,
         "occupied_beyond": beyond_stats,
         "gaza_damage": {**damage_stats, "timeline": damage_points,
                         "timeline_meta": damage_timeline_stats},
