@@ -441,7 +441,7 @@ Destruction is not dispossession. People live in tent camps among the rubble;
 that ground is not lost, prohibited or stolen, and the layer must never be
 summed into a land-loss total.
 
-## 16. Gaza access restrictions — geometry found 2026-08-23, pending permission
+## 16. Gaza access restrictions — there is no single line to draw
 
 OCHA report the restricted-access zone Israel calls the **"Yellow Line"** at
 **64.9% of the Gaza Strip as at June 2026**, up from about 53% at the October
@@ -477,9 +477,12 @@ Its `Shape__Area` attribute says 271,902,533 m². That is Web Mercator, inflated
 about 37% at this latitude, and must never be quoted — the same class of error
 as recomputing area from simplified geometry.
 
-It is registered **disabled** pending written confirmation. The item says "Free
-to be used by the public", but on the parent app rather than the layer, and it
-is not a named licence. Draft at `docs/permissions/inss-yellow-line.md`.
+It is registered **disabled and will stay that way**. Asking an Israeli
+national-security think tank for permission to use their data on a Palestinian
+land-loss map invites attention this project does not need; that is the owner's
+decision, recorded in `docs/permissions/inss-yellow-line.md`. The finding stays
+on the record because it independently corroborates the ~53% figure and
+documents a Web Mercator trap worth remembering, but nothing from it ships.
 
 Two things to note about the source when it lands. INSS is an Israeli security
 think tank, which cuts in its favour here: a source with no incentive to
@@ -487,6 +490,24 @@ overstate Israeli control putting it at 54% is stronger evidence than an
 advocacy source would be. And the polygon is *their depiction*, not an official
 demarcation — it must be attributed and dated as such, never presented as the
 line itself.
+
+**The deeper problem, established 2026-08-23.** There is no single line to draw.
+BBC Verify geolocated the concrete markers and found them **up to 520 metres
+inside** the line on the Israeli military's own published map — six blocks near
+al-Atatra in the north, and ten near Khan Younis between 180 and 290 metres
+inside it on 19 October 2025. The military says the blocks are placed every 200
+metres; the defence minister who ordered them said crossing the line would be
+met with fire. Residents told the BBC they cannot tell which side they are on.
+
+So a map that drew one line would resolve, by cartography, an ambiguity that is
+killing people. The explainer now carries both lines as a documented
+disagreement rather than picking one — which is a better answer than the polygon
+would have been.
+
+**The route worth taking:** Gaza Maps, a project of Databases for Palestine,
+publish a methodology reconstructing the IDF's own displacement orders in WGS84
+and updating the same day an order is issued. Their API exists and returns 403,
+so it is a request. Draft at `docs/permissions/databases-for-palestine.md`.
 
 **Not asserted:** the widely repeated 64.9% figure. It does not appear in the
 OCHA report cited, and no OCHA document stating it could be read directly — the

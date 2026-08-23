@@ -187,6 +187,30 @@ SOURCES: dict[str, Source] = {
         notes="Every record is published with Geo Precision 'censored' and no "
               "coordinates. This is a table, never map pins — see non-negotiable 2.",
     ),
+    "bbc_verify": Source(
+        source_id="bbc_verify",
+        name="BBC Verify — open-source verification journalism",
+        publisher="BBC",
+        licence="All rights reserved. No licence relied on: headline, byline, "
+                "date and URL only, with findings restated in our own words. "
+                "The Al-Haq rule applied to a broadcaster.",
+        url="https://www.bbc.com/news/articles/cx2y00g4x29o",
+        attribution="BBC Verify",
+        currency_note="Investigation dated 23 October 2025.",
+    ),
+    "databases_for_palestine": Source(
+        source_id="databases_for_palestine",
+        name="Gaza Maps / Databases for Palestine",
+        publisher="Databases for Palestine",
+        licence="UNKNOWN — API exists but returns 403; access not yet requested.",
+        url="https://gazamaps.com/methodology",
+        enabled=False,
+        attribution="Gaza Maps, a project of Databases for Palestine",
+        notes="Publishes a stated methodology: they reconstruct the IDF's own "
+              "'Swords of Iron' displacement orders and compute areas in WGS84, "
+              "updating the same day an order is issued. Derivation from a "
+              "primary record, method published — the opposite of an aggregator.",
+    ),
     "inss": Source(
         source_id="inss",
         name="INSS — Post-War Gaza: Israeli military presence (the Yellow Line)",

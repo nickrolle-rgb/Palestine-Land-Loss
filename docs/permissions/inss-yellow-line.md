@@ -1,7 +1,19 @@
 # INSS — permission to reuse the Yellow Line polygon
 
-**Status:** drafted 2026-08-23, not sent. Source registered **disabled** in
-`etl/sources.py` until a reply is recorded in `RESPONSES.md` (non-negotiable 4).
+**Status: NOT PURSUED — decision taken 2026-08-23.** The draft below is kept as
+a record of what was found and considered, not as a pending action. Do not send
+it.
+
+**Why.** Approaching an Israeli national-security think tank for permission to
+use their data on a Palestinian land-loss map invites a kind of attention this
+project does not need at this stage. That is the project owner's call and it is
+a sound one: the cost is one layer we can source elsewhere, and the risk is to
+the standing of everything else on the map.
+
+The finding itself stays on the record because it is useful — it independently
+corroborates the ~53% figure, and it documents a Web Mercator area trap worth
+remembering. The source remains **disabled** in `etl/sources.py` and nothing
+from it is published.
 
 ## What we found
 

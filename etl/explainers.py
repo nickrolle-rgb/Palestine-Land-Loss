@@ -45,6 +45,17 @@ _OCHA_SITREP_JUN26 = Evidence(
 )
 
 
+_BBC_YELLOW = Evidence(
+    source_id="bbc_verify",
+    title="Israel maintaining control deeper inside Gaza than expected, new "
+          "boundary markers suggest — BBC Verify",
+    url="https://www.bbc.com/news/articles/cx2y00g4x29o",
+    document_date="2025-10-23",
+    retrieved="2026-08-23",
+    note="Findings restated in our own words; BBC content is not reproduced.",
+)
+
+
 @dataclass
 class Claim:
     text: str
@@ -144,10 +155,12 @@ EXPLAINERS: list[Explainer] = [
         question="Which parts of Gaza can Palestinians not go to?",
         summary=(
             "There is territory in Gaza that Palestinians cannot enter, and this "
-            "map does not draw it — because nobody publishes where it is. The "
-            "restriction is real, dated and sourced; the boundary is not public. "
-            "Saying so is the only honest option: a line drawn by eye across Gaza "
-            "would be a guess presented as evidence."
+            "map does not draw it. Not only because the boundary is unpublished, "
+            "but because there is no single line to draw: the concrete blocks on "
+            "the ground and the line on the military's own map are hundreds of "
+            "metres apart, and people have been shot in the gap between them. "
+            "Drawing one line would resolve, by cartography, an ambiguity that is "
+            "killing people."
         ),
         attaches_to="gaza",
         claims=[
@@ -166,8 +179,26 @@ EXPLAINERS: list[Explainer] = [
                 "and “constantly shifting ‘yellow’ and ‘orange’ lines”.",
                 [_OCHA_SITREP_JUN26], quote=True,
             ),
+            Claim(
+                "The line is marked on the ground by concrete blocks. The Israeli "
+                "military told BBC Verify they are placed every 200 metres.",
+                [_BBC_YELLOW],
+            ),
+            Claim(
+                "Those markers do not sit where the military's own published map "
+                "puts the line. BBC Verify geolocated six blocks near al-Atatra "
+                "in the north up to 520 metres deeper into the Strip than the map "
+                "indicated, and a satellite image of 19 October 2025 showed ten "
+                "markers near Khan Younis between 180 and 290 metres inside it.",
+                [_BBC_YELLOW],
+            ),
+            Claim(
+                "Israel's defence minister, who ordered the blocks placed, said "
+                "anyone crossing the line would be met with fire.",
+                [_BBC_YELLOW],
+            ),
         ],
-        unverified=[
+            unverified=[
             "That the restricted zone reached 64.9% of the Gaza Strip by June "
             "2026, up from about 53% at the October 2025 ceasefire. Very widely "
             "repeated. It does not appear in the OCHA situation report cited "
@@ -176,6 +207,10 @@ EXPLAINERS: list[Explainer] = [
             "That a further “Orange Line” covers roughly 36 km², about 10% more "
             "of the Strip. Same position — repeated, not sourced to a document "
             "this project could open.",
+            "Which of the two lines is *the* line. The published map and the "
+            "physical markers disagree by up to 520 metres, and the people living "
+            "between them have said they cannot tell which side they are on. That "
+            "is not a gap in our data; it is the condition being documented.",
             "Where either line actually runs. Israel's military shared the maps "
             "with aid organisations in March 2026 and has not released them "
             "publicly. Every Palestine dataset on HDX was searched across all "
