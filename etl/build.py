@@ -21,6 +21,7 @@ from .adapters import alhaq as alhaq_adapter
 from .adapters import btselem
 from .adapters import gaza as gaza_adapter
 from .adapters import prcs as prcs_adapter
+from .adapters import insecurity as insecurity_adapter
 from .adapters import unosat as unosat_adapter
 from .adapters import historical
 from .adapters import ocha
@@ -339,6 +340,22 @@ def build_base() -> dict:
         [feature(f["geometry"], f["properties"]) for f in prcs_feats],
     )
 
+    print("[hlth] Attacks on health care (Insecurity Insight)")
+    health, health_stats = insecurity_adapter.load_health_attacks()
+    print(f"       {health['incidents']:,} incidents | {health['censored']:,} geo-censored by "
+          f"the publisher, {health['geocoded']:,} with coordinates")
+    print(f"       {health['totals']['workers_killed']:,} health workers killed, "
+          f"{health['totals']['facilities_destroyed']:,} facilities destroyed")
+    # Registered in the shared citation table like any layer, then written as a
+    # plain document — there is no geometry to make a FeatureCollection from.
+    from .schema import _evidence_id
+    refs = []
+    for ev in health.pop("evidence", []):
+        eid = _evidence_id(ev)
+        EVIDENCE_TABLE.setdefault(eid, ev)
+        refs.append(eid)
+    write_json(PROCESSED / "health_attacks.json", {**health, "evidence_ref": refs})
+
     print("[base] resource destruction (Masafer Yatta)")
     from .adapters.alhaq import Gazetteer
     gaz = Gazetteer(localities)
@@ -535,6 +552,7 @@ def build_base() -> dict:
         "village_boundaries": len(villages),
         "gaza_municipal": len(gaza_muni),
         "prcs": {k: v for k, v in prcs_stats.items() if k != "withheld_names"},
+        "health_attacks": health_stats,
         "gaza_damage": {**damage_stats, "timeline": damage_points,
                         "timeline_meta": damage_timeline_stats},
         "gaza_neighbourhoods": gaza_stats,

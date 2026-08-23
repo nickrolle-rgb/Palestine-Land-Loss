@@ -407,3 +407,12 @@ details.block > summary:hover h2, details.block > summary:focus-visible h2 { col
 }
 .dt-bar i { display: block; height: 100%; background: #a8a29e; }
 .dt-n { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.85; }
+
+/* Attacks on health care — figures, not pins. */
+.health-figures { margin: 0.5rem 0; }
+.health-figures > div {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 0.6rem; margin-bottom: 0.22rem; font-size: 0.75rem;
+}
+.health-figures dt { opacity: 0.75; }
+.health-figures dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }

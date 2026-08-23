@@ -57,6 +57,7 @@ async function loadAll() {
     gaza_neighbourhoods: "gaza_neighbourhoods.geojson",
     prcs: "prcs_facilities.geojson",
     gaza_damage: "gaza_damage.geojson",
+    health: "health_attacks.json",
     barrier: "barrier.geojson",
     incidents: "incidents.geojson",
     mandate: "mandate_palestine.geojson",
@@ -1040,6 +1041,51 @@ function damageRampLegend(feats) {
   return el;
 }
 
+// The one source here with nothing to plot. Insecurity Insight censor every
+// coordinate to protect the people involved, which is a decision by people
+// closer to the danger than we are and not ours to work around. So it is a
+// table, and the panel says why rather than leaving a reader to wonder where
+// the pins are.
+function buildHealthAttacks() {
+  const host = document.getElementById("health-attacks");
+  if (!host) return;
+  const d = state.data.health;
+  if (!d || !d.incidents) {
+    host.innerHTML = `<p class="hint">No data in this build.</p>`;
+    return;
+  }
+  const t = d.totals || {};
+  const rows = [
+    ["Health workers killed", t.workers_killed],
+    ["Health workers injured", t.workers_injured],
+    ["Health workers arrested", t.workers_arrested],
+    ["Facilities destroyed", t.facilities_destroyed],
+    ["Facilities damaged", t.facilities_damaged],
+  ].filter(([, v]) => v != null);
+
+  const areas = Object.entries(d.by_area || {}).slice(0, 4);
+  const ev = resolveEvidenceRefs(d, state.meta);
+
+  host.innerHTML = `
+    <p class="hint">${d.incidents.toLocaleString()} recorded incidents,
+    2016–2026. <strong>All ${d.censored.toLocaleString()} are published with
+    their coordinates censored</strong> by Insecurity Insight to protect those
+    involved, so this is a table and nothing here is placed on the map.</p>
+    <dl class="health-figures">${rows.map(([k, v]) =>
+      `<div><dt>${k}</dt><dd>${Number(v).toLocaleString()}</dd></div>`).join("")}</dl>
+    <p class="hint">By area: ${areas.map(([k, v]) =>
+      `${k} ${v.toLocaleString()}`).join(" · ")}</p>
+    ${ev.length ? `<p class="hint">${ev.map((e) => e.url
+      ? `<a href="${e.url}" target="_blank" rel="noopener">${e.title}</a>` : e.title)
+      .join("")} — dated ${ev[0].document_date}, retrieved ${ev[0].retrieved}. ${d.licence || ""}</p>` : ""}`;
+}
+
+// Small local resolver so this section does not need the panels module.
+function resolveEvidenceRefs(obj, meta) {
+  const table = (meta && meta.evidence) || {};
+  return (obj.evidence_ref || []).map((id) => table[id]).filter(Boolean);
+}
+
 function buildExplainers() {
   const host = document.getElementById("explainer-list");
   if (!host) return;
@@ -1400,6 +1446,7 @@ async function init() {
       buildMechanismToggles(map);
       buildContextToggles(map);
       buildGazaToggles(map);
+      buildHealthAttacks();
       buildExplainers();
       buildHistoricalToggles(map);
       buildIncidentToggles(map);

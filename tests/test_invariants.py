@@ -804,3 +804,39 @@ class DestructionIsNotDispossession(unittest.TestCase):
         self.assertEqual(s["sites_total"], s["sites_placed"] + s["sites_unplaced"])
         self.assertEqual(s["sites_unplaced"], 0,
                          "a site outside every municipality would be unattributable")
+
+
+class CensoredDataIsNeverPlaced(unittest.TestCase):
+    """Insecurity Insight censor every coordinate. We honour that.
+
+    This is rule 2 arriving from the opposite direction: not a source that
+    failed to give us a location, but one that deliberately withheld it to
+    protect people. Geocoding it from the place names would defeat a
+    protection decision made by people closer to the danger than we are.
+    """
+
+    def setUp(self):
+        self.doc = load("health_attacks.json")
+
+    def test_no_geometry_is_published(self):
+        blob = json.dumps(self.doc).lower()
+        for key in ("latitude", "longitude", "coordinates", "geometry"):
+            self.assertNotIn(key, blob, f"'{key}' reached a censored dataset")
+
+    def test_the_censored_count_is_published(self):
+        self.assertEqual(self.doc["incidents"],
+                         self.doc["geocoded"] + self.doc["censored"])
+        self.assertGreater(self.doc["censored"], 0)
+
+    def test_it_did_not_become_a_map_layer(self):
+        import pathlib
+        data = pathlib.Path(__file__).resolve().parents[1] / "web" / "public" / "data"
+        self.assertFalse((data / "health_attacks.geojson").exists(),
+                         "censored incident data must never be written as geometry")
+
+    def test_citation_resolves(self):
+        table = load("meta.json")["evidence"]
+        refs = self.doc.get("evidence_ref") or []
+        self.assertTrue(refs, "uncited dataset")
+        for r in refs:
+            self.assertIn(r, table)

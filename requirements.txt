@@ -12,3 +12,4 @@ lxml>=5.0           # parser backend
 # so this needs no system GDAL — the same bargain pyproj already makes with
 # PROJ. Confined to etl/adapters/unosat.py by test; nothing else may import it.
 pyogrio>=0.13       # Esri FileGDB reader (GDAL bundled in the wheel)
+openpyxl>=3.1       # Insecurity Insight publish their incident data as XLSX

@@ -175,6 +175,18 @@ SOURCES: dict[str, Source] = {
               "counts ARE an adaptation and are published CC BY-SA. Damage is not "
               "dispossession (non-negotiable 11): never summed into a land-loss total.",
     ),
+    "insecurity_insight": Source(
+        source_id="insecurity_insight",
+        name="Insecurity Insight — attacks on health care, aid and education",
+        publisher="Insecurity Insight",
+        licence="CC BY-SA 4.0 (as published on HDX)",
+        url="https://data.humdata.org/dataset/opt-violent-and-threatening-incidents-against-healthcare",
+        attribution="Insecurity Insight, Safeguarding Health in Conflict Coalition "
+                    "and partners — SiND incident data",
+        currency_note="Updated continuously; the release ingested here is dated 2026-08-17.",
+        notes="Every record is published with Geo Precision 'censored' and no "
+              "coordinates. This is a table, never map pins — see non-negotiable 2.",
+    ),
     "wikidata": Source(
         source_id="wikidata",
         name="Wikidata",
@@ -297,6 +309,16 @@ HDX_RESOURCES: list[HdxResource] = [
         source_crs="EPSG:4326",
         description="198,308 assessed damage sites in the Gaza Strip, each with up "
                     "to 14 dated assessment rounds. Esri FileGDB; read via pyogrio.",
+    ),
+    HdxResource(
+        key="health_attacks",
+        source_id="insecurity_insight",
+        url="https://data.humdata.org/dataset/b36e1975-4428-4caa-9b00-e0d8793130d0/resource/e5e62e1c-7350-416a-8077-10c948652d84/download/2016-2026-pse-attacks-on-health-care-incident-data.xlsx",
+        filename="pse_attacks_on_health_care.xlsx",
+        shapefile_base=None,
+        source_crs=None,
+        description="4,408 attacks on health care in the oPt, 2016-2026. Every "
+                    "record is geo-censored by the publisher; counts only.",
     ),
     HdxResource(
         key="prcs_facilities",
